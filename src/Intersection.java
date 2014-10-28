@@ -38,6 +38,8 @@ public class Intersection {
 	 */
 	public GOval piece;
 	
+	public boolean marked = false;
+	
 	public Intersection(double xPos, double yPos, double pieceDiameter) {
 		xLocation = xPos;
 		yLocation = yPos;

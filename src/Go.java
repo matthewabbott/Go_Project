@@ -126,9 +126,9 @@ public class Go extends GraphicsProgram {
 		addActionListeners();
 	}
 
-	/** runs the Go game */
+	/** testing stuff */
 	public void run() {
-		// finalGameStats();
+		test(intersections[2][4]);
 	}
 
 	/**
@@ -383,41 +383,146 @@ public class Go extends GraphicsProgram {
 	private void capturePieces() {
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
-				if (markedForCapture(i, j)) {
+				if (markedForCapture(i, j, null)) {
+					intersections[i][j].marked = true;
+				}
+			}
+		}
+		for (int i = 0; i < NUM_LINES; i++) {
+			for (int j = 0; j < NUM_LINES; j++) {
+				if (intersections[i][j].marked) {
 					remove(intersections[i][j].piece);
 					intersections[i][j].setAllegiance(currentPlayer + 2);
+					intersections[i][j].marked = false;
 				}
 			}
 		}
 	}
 
-	private boolean markedForCapture(int x, int y) {
+	private boolean markedForCapture(int x, int y, Intersection start) {
 		/*
-		 * if a piece has no 'liberties' that is, empty spaces around it, then it is slated to be captured
-		 * however, if any of its liberties are occupied by a piece of the same color, then it will not be captured
-		 * again however, if those pieces of the same color have no liberties they are marked for capture under the same conditions
+		 * if a piece has no 'liberties' that is, empty spaces around it, then
+		 * it is slated to be captured however, if any of its liberties are
+		 * occupied by a piece of the same color, then it will not be captured
+		 * again however, if those pieces of the same color have no liberties
+		 * they are marked for capture under the same conditions
 		 * 
-		 * recursion
-		 * 4 directions.
-		 * base case: all edges are either walls or opposing allegiances
-		 * recursive step, check adjacent pieces to see if they are marked for capture (or of opposing allegiance)
+		 * recursion 4 directions. base case: all edges are either walls or
+		 * opposing allegiances recursive step, check adjacent pieces to see if
+		 * they are marked for capture (or of opposing allegiance)
 		 */
-//		if (topBlocked(x, y) && leftBlocked(x, y) && rightBlocked(x, y) && downBlocked(x, y)){
-//			return true;
-//		}
-//		
+		if (intersections[x][y].getAllegiance() == 0
+				|| intersections[x][y].getAllegiance() > 2) {
+			return false;
+		}
+		if (topBlocked(x, y, start) && leftBlocked(x, y, start)
+				&& rightBlocked(x, y, start) && downBlocked(x, y, start)) {
+			return true;
+		}
+
 		return false;
-//	}
-//	
-//	private boolean topBlocked(int x, int y) {
-//		if (y - 1 < 0) {
-//			return true;
-//		} else if (intersections[x][y].getAllegiance() == 1) {
-//			
-//		}
 	}
 
-	/* Possible additions
-	 * label 1-19, a-s, accommodate less than 19x19 board sizes with this addition
+	private boolean topBlocked(int x, int y, Intersection start) {
+		if (y - 1 < 0) {
+			return true;
+		} else if (intersections[x][y-1] == start) {
+			return true;
+		} else if (intersections[x][y - 1].getAllegiance() == 0
+				|| intersections[x][y - 1].getAllegiance() > 2) {
+			return false;
+		} else if (intersections[x][y].getAllegiance() == 1) {
+			if (intersections[x][y - 1].getAllegiance() == 2) {
+				return true;
+			} else {
+				return markedForCapture(x, y - 1, intersections[x][y]);
+			}
+		} else {
+			if (intersections[x][y - 1].getAllegiance() == 1) {
+				return true;
+			} else {
+				return markedForCapture(x, y - 1, intersections[x][y]);
+			}
+		}
+	}
+
+	private boolean leftBlocked(int x, int y, Intersection start) {
+		if (x - 1 < 0) {
+			return true;
+		} else if (intersections[x-1][y] == start) {
+			return true;
+		} else if (intersections[x - 1][y].getAllegiance() == 0
+				|| intersections[x - 1][y].getAllegiance() > 2) {
+			return false;
+		} else if (intersections[x][y].getAllegiance() == 1) {
+			if (intersections[x - 1][y].getAllegiance() == 2) {
+				return true;
+			} else {
+				return markedForCapture(x - 1, y, intersections[x][y]);
+			}
+		} else {
+			if (intersections[x - 1][y].getAllegiance() == 1) {
+				return true;
+			} else {
+				return markedForCapture(x - 1, y, intersections[x][y]);
+			}
+		}
+	}
+
+	private boolean rightBlocked(int x, int y, Intersection start) {
+		if (x + 1 < 0) {
+			return true;
+		} else if (intersections[x+1][y] == start) {
+			return true;
+		} else if (intersections[x + 1][y].getAllegiance() == 0
+				|| intersections[x + 1][y].getAllegiance() > 2) {
+			return false;
+		} else if (intersections[x][y].getAllegiance() == 1) {
+			if (intersections[x + 1][y].getAllegiance() == 2) {
+				return true;
+			} else {
+				return markedForCapture(x + 1, y, intersections[x][y]);
+			}
+		} else {
+			if (intersections[x + 1][y].getAllegiance() == 1) {
+				return true;
+			} else {
+				return markedForCapture(x + 1, y, intersections[x][y]);
+			}
+		}
+	}
+
+	private boolean downBlocked(int x, int y, Intersection start) {
+		if (y + 1 < 0) {
+			return true;
+		} else if (intersections[x][y + 1] == start) {
+			return true;
+		} else if (intersections[x][y + 1].getAllegiance() == 0
+				|| intersections[x][y + 1].getAllegiance() > 2) {
+			return false;
+		} else if (intersections[x][y].getAllegiance() == 1) {
+			if (intersections[x][y + 1].getAllegiance() == 2) {
+				return true;
+			} else {
+				return markedForCapture(x, y - 1, intersections[x][y]);
+			}
+		} else {
+			if (intersections[x][y + 1].getAllegiance() == 1) {
+				return true;
+			} else {
+				return markedForCapture(x, y + 1, intersections[x][y]);
+			}
+		}
+	}
+	
+	private void test(Intersection test) {
+		println(test == intersections[2][4]);
+		println(test == null);
+		println(intersections[2][4] == null);
+	}
+
+	/*
+	 * Possible additions label 1-19, a-s, accommodate less than 19x19 board
+	 * sizes with this addition
 	 */
 }
