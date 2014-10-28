@@ -393,9 +393,30 @@ public class Go extends GraphicsProgram {
 		}
 	}
 
-	private boolean markedForCapture(int xIndex, int yIndex) {
-
+	private boolean markedForCapture(int x, int y) {
+		/*
+		 * if a piece has no 'liberties' that is, empty spaces around it, then it is slated to be captured
+		 * however, if any of its liberties are occupied by a piece of the same color, then it will not be captured
+		 * again however, if those pieces of the same color have no liberties they are marked for capture under the same conditions
+		 * 
+		 * recursion
+		 * 4 directions.
+		 * base case: all edges are either walls or opposing allegiances
+		 * recursive step, check adjacent pieces to see if they are marked for capture (or of opposing allegiance)
+		 */
+		if (topBlocked(x, y) && leftBlocked(x, y) && rightBlocked(x, y) && downBlocked(x, y)){
+			return true
+		}
+		
 		return false;
+	}
+	
+	private boolean topBlocked(int x, int y) {
+		if (y - 1 < 0) {
+			return true;
+		} else if (intersections[x][y].getAllegiance() == 1) {
+			
+		}
 	}
 
 	/* Possible additions
