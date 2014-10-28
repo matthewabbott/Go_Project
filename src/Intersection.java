@@ -27,8 +27,8 @@ public class Intersection {
 	 */
 	private int allegiance;
 	
-	/** determines the diameter of the game piece associated with the intersection */
-	private double pieceDiameter;
+//	/** determines the diameter of the game piece associated with the intersection */
+//	private double pieceDiameter;
 	
 	/** This oval is the game piece associated with the given intersection
 	 * It is drawn by the Go.java program when a player has chosen the intersection.
@@ -42,7 +42,7 @@ public class Intersection {
 		yLocation = yPos;
 		piece = new GOval(xLocation - pieceDiameter/2, yLocation - pieceDiameter/2, pieceDiameter, pieceDiameter);
 		allegiance = 0;
-		this.pieceDiameter = pieceDiameter;
+//		this.pieceDiameter = pieceDiameter;
 	}
 	
 	public int getAllegiance() {
