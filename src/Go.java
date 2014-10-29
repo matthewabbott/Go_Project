@@ -29,6 +29,7 @@ package src;
 import java.applet.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 
 import acm.graphics.*;
 import acm.program.*;
@@ -79,6 +80,7 @@ public class Go extends GraphicsProgram {
 
 	/** This integer represents the player whose turn it currently is */
 	private int currentPlayer = 1;
+	private int opposingPlayer = 2;
 
 	/**
 	 * This array contains all of the intersections on the game board. It exists
@@ -128,7 +130,7 @@ public class Go extends GraphicsProgram {
 
 	/** testing stuff */
 	public void run() {
-		
+
 	}
 
 	/**
@@ -172,26 +174,6 @@ public class Go extends GraphicsProgram {
 		}
 	}
 
-	/**
-	 * playerTurn is a private void method that allows a player to take his/her
-	 * turn. They use the mouse to click an intersection, at which point their
-	 * piece will be placed there. Note: when the player clicks, their piece
-	 * will be placed on the intersection they are close enough to, or if they
-	 * are not close to any intersections the game will wait until they have
-	 * clicked clicked again indefinitely. Alternatively, the player may click
-	 * the pass button and their turn will be skipped. The method then checks to
-	 * see if any piece has been captured. After this happens blackTurn returns
-	 * a boolean that states whether or not both players have passed their
-	 * turns. If they have, the game ends. When a player's turn comes up,
-	 * current player is changed such that it no longer corresponds to the
-	 * previous player.
-	 */
-	private void playerTurn() {
-		currentPlayer++;
-		if (currentPlayer > 2) {
-			currentPlayer = 1;
-		}
-	}
 
 	/**
 	 * mouseClicked responds to a player clicking the board somewhere, calling
@@ -296,6 +278,10 @@ public class Go extends GraphicsProgram {
 		if (currentPlayer > 2) {
 			currentPlayer = 1;
 		}
+		opposingPlayer++;
+		if (opposingPlayer > 2) {
+			opposingPlayer = 1;
+		}
 		numUndos = 0;
 	}
 
@@ -383,11 +369,25 @@ public class Go extends GraphicsProgram {
 	private void capturePieces() {
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
-				if (markedForCapture(i, j, null)) {
-					intersections[i][j].marked = true;
+				ArrayList<Intersection> checked = new ArrayList<Intersection>();
+				checked = markedForCapture(i, j, checked);
+				boolean allCheckedPiecesMarked = true;
+				for (int k = 0; k < checked.size(); k++){
+					if (checked.get(k).getAllegiance() == currentPlayer){
+						System.out.println("Something is wrong, checked has pieces of the current player in it");
+					}
+					if (!checked.get(k).marked){
+						allCheckedPiecesMarked = false;
+					}
+				}
+				if (!allCheckedPiecesMarked){
+					for (int k = 0; k < checked.size(); k++){
+						checked.get(k).marked = false;
+					}
 				}
 			}
 		}
+
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
 				if (intersections[i][j].marked) {
@@ -397,9 +397,19 @@ public class Go extends GraphicsProgram {
 				}
 			}
 		}
+
+//		for (int i = 0; i < NUM_LINES; i++) {
+//			for (int j = 0; j < NUM_LINES; j++) {
+//				if (intersections[i][j].marked) {
+//					intersections[i][j].marked = false;
+//				}
+//			}
+//		}
+
 	}
 
-	private boolean markedForCapture(int x, int y, Intersection start) {
+	private ArrayList<Intersection> markedForCapture(int x, int y,
+			ArrayList<Intersection> checked) {
 		/*
 		 * if a piece has no 'liberties' that is, empty spaces around it, then
 		 * it is slated to be captured however, if any of its liberties are
@@ -411,116 +421,95 @@ public class Go extends GraphicsProgram {
 		 * opposing allegiances recursive step, check adjacent pieces to see if
 		 * they are marked for capture (or of opposing allegiance)
 		 */
-		if (intersections[x][y].getAllegiance() == 0
-				|| intersections[x][y].getAllegiance() > 2) {
-			return false;
+		
+		if(currentPlayer == intersections[x][y].getAllegiance()) {
+			intersections[x][y].marked = false;
+			checked.clear();
+			return checked;
 		}
-		if (topBlocked(x, y, start) && leftBlocked(x, y, start)
-				&& rightBlocked(x, y, start) && downBlocked(x, y, start)) {
-			return true;
+		checked.add(intersections[x][y]);
+		if (topBlocked(x, y, checked) && leftBlocked(x, y, checked)
+				&& rightBlocked(x, y, checked) && downBlocked(x, y, checked)) {
+			intersections[x][y].marked = true;
+			return checked;
 		}
-
-		return false;
+		intersections[x][y].marked = false;
+		return checked;
 	}
-
-	private boolean topBlocked(int x, int y, Intersection start) {
-		if (y - 1 < 0) {
+	
+	private boolean topBlocked(int x, int y, ArrayList<Intersection> checked){
+		if (y - 1 < 0){
 			return true;
-		} else if (intersections[x][y - 1].getAllegiance() == 0
-				|| intersections[x][y - 1].getAllegiance() > 2) {
+		} else if (checked.contains(intersections[x][y - 1]) || intersections[x][y - 1].getAllegiance() == currentPlayer) {
+			return true;
+		} else if (intersections[x][y - 1].getAllegiance() == opposingPlayer) {
+				checked = markedForCapture(x, y - 1, checked);
+				for(int i = 0; i < checked.size(); i++){
+					if (!checked.get(i).marked){
+						return false;
+					}
+				}
+				return true;
+		} else { //if the top territory is not a wall and not a piece then the top is not blocked.
 			return false;
-		} else if (intersections[x][y - 1] == start) {
-			return true;
-		} else if (intersections[x][y].getAllegiance() == 1) {
-			if (intersections[x][y - 1].getAllegiance() == 2) {
-				return true;
-			} else {
-				return markedForCapture(x, y - 1, intersections[x][y]);
-			}
-		} else {
-			if (intersections[x][y - 1].getAllegiance() == 1) {
-				return true;
-			} else {
-				return markedForCapture(x, y - 1, intersections[x][y]);
-			}
-		}
-	}
-
-	private boolean leftBlocked(int x, int y, Intersection start) {
-		if (x - 1 < 0) {
-			return true;
-		} else if (intersections[x - 1][y].getAllegiance() == 0
-				|| intersections[x - 1][y].getAllegiance() > 2) {
-			return false;
-		} else if (intersections[x - 1][y] == start) {
-			return true;
-		} else if (intersections[x][y].getAllegiance() == 1) {
-			if (intersections[x - 1][y].getAllegiance() == 2) {
-				return true;
-			} else {
-				return markedForCapture(x - 1, y, intersections[x][y]);
-			}
-		} else {
-			if (intersections[x - 1][y].getAllegiance() == 1) {
-				return true;
-			} else {
-				return markedForCapture(x - 1, y, intersections[x][y]);
-			}
-		}
-	}
-
-	private boolean rightBlocked(int x, int y, Intersection start) {
-		if (x + 1 < 0) {
-			return true;
-		} else if (intersections[x + 1][y].getAllegiance() == 0
-				|| intersections[x + 1][y].getAllegiance() > 2) {
-			return false;
-		} else if (intersections[x + 1][y] == start) {
-			return true;
-		} else if (intersections[x + 1][y].getAllegiance() == 0
-				|| intersections[x + 1][y].getAllegiance() > 2) {
-			return false;
-		} else if (intersections[x][y].getAllegiance() == 1) {
-			if (intersections[x + 1][y].getAllegiance() == 2) {
-				return true;
-			} else {
-				return markedForCapture(x + 1, y, intersections[x][y]);
-			}
-		} else {
-			if (intersections[x + 1][y].getAllegiance() == 1) {
-				return true;
-			} else {
-				return markedForCapture(x + 1, y, intersections[x][y]);
-			}
-		}
-	}
-
-	private boolean downBlocked(int x, int y, Intersection start) {
-		if (y + 1 < 0) {
-			return true;
-		} else if (intersections[x][y + 1].getAllegiance() == 0
-				|| intersections[x][y + 1].getAllegiance() > 2) {
-			return false;
-		} else if (intersections[x][y + 1] == start) {
-			return true;
-		} else if (intersections[x][y + 1].getAllegiance() == 0
-				|| intersections[x][y + 1].getAllegiance() > 2) {
-			return false;
-		} else if (intersections[x][y].getAllegiance() == 1) {
-			if (intersections[x][y + 1].getAllegiance() == 2) {
-				return true;
-			} else {
-				return markedForCapture(x, y + 1, intersections[x][y]);
-			}
-		} else {
-			if (intersections[x][y + 1].getAllegiance() == 1) {
-				return true;
-			} else {
-				return markedForCapture(x, y + 1, intersections[x][y]);
-			}
 		}
 	}
 	
+	private boolean leftBlocked(int x, int y, ArrayList<Intersection> checked){
+		if (x - 1 < 0){
+			return true;
+		} else if (checked.contains(intersections[x - 1][y]) || intersections[x - 1][y].getAllegiance() == currentPlayer) {
+			return true;
+		} else if (intersections[x - 1][y].getAllegiance() == opposingPlayer) {
+				checked = markedForCapture(x - 1, y, checked);
+				for(int i = 0; i < checked.size(); i++){
+					if (!checked.get(i).marked){
+						return false;
+					}
+				}
+				return true;
+		} else {
+			return false;
+		}
+	}
+	
+	private boolean downBlocked(int x, int y, ArrayList<Intersection> checked){
+		if (y + 1 >= NUM_LINES){
+			return true;
+		} else if (checked.contains(intersections[x][y + 1]) || intersections[x][y + 1].getAllegiance() == currentPlayer) {
+			return true;
+		} else if (intersections[x][y + 1].getAllegiance() == opposingPlayer) {
+				checked = markedForCapture(x, y + 1, checked);
+				for(int i = 0; i < checked.size(); i++){
+					if (!checked.get(i).marked){
+						return false;
+					}
+				}
+				return true;
+		} else {
+			return false;
+		}
+	}
+	
+	private boolean rightBlocked(int x, int y, ArrayList<Intersection> checked){
+		if (x + 1 >= NUM_LINES){
+			return true;
+		} else if (checked.contains(intersections[x + 1][y]) || intersections[x + 1][y].getAllegiance() == currentPlayer) {
+			return true;
+		} else if (intersections[x + 1][y].getAllegiance() == opposingPlayer) {
+				checked = markedForCapture(x + 1, y, checked);
+				for(int i = 0; i < checked.size(); i++){
+					if (!checked.get(i).marked){
+						return false;
+					}
+				}
+				return true;
+		} else {
+			return false;
+		}
+	}
+
+
 	/*
 	 * Possible additions label 1-19, a-s, accommodate less than 19x19 board
 	 * sizes with this addition
