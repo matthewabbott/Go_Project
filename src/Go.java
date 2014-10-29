@@ -128,7 +128,7 @@ public class Go extends GraphicsProgram {
 
 	/** testing stuff */
 	public void run() {
-		test(intersections[2][4]);
+		
 	}
 
 	/**
@@ -426,11 +426,11 @@ public class Go extends GraphicsProgram {
 	private boolean topBlocked(int x, int y, Intersection start) {
 		if (y - 1 < 0) {
 			return true;
-		} else if (intersections[x][y-1] == start) {
-			return true;
 		} else if (intersections[x][y - 1].getAllegiance() == 0
 				|| intersections[x][y - 1].getAllegiance() > 2) {
 			return false;
+		} else if (intersections[x][y - 1] == start) {
+			return true;
 		} else if (intersections[x][y].getAllegiance() == 1) {
 			if (intersections[x][y - 1].getAllegiance() == 2) {
 				return true;
@@ -449,11 +449,11 @@ public class Go extends GraphicsProgram {
 	private boolean leftBlocked(int x, int y, Intersection start) {
 		if (x - 1 < 0) {
 			return true;
-		} else if (intersections[x-1][y] == start) {
-			return true;
 		} else if (intersections[x - 1][y].getAllegiance() == 0
 				|| intersections[x - 1][y].getAllegiance() > 2) {
 			return false;
+		} else if (intersections[x - 1][y] == start) {
+			return true;
 		} else if (intersections[x][y].getAllegiance() == 1) {
 			if (intersections[x - 1][y].getAllegiance() == 2) {
 				return true;
@@ -472,7 +472,10 @@ public class Go extends GraphicsProgram {
 	private boolean rightBlocked(int x, int y, Intersection start) {
 		if (x + 1 < 0) {
 			return true;
-		} else if (intersections[x+1][y] == start) {
+		} else if (intersections[x + 1][y].getAllegiance() == 0
+				|| intersections[x + 1][y].getAllegiance() > 2) {
+			return false;
+		} else if (intersections[x + 1][y] == start) {
 			return true;
 		} else if (intersections[x + 1][y].getAllegiance() == 0
 				|| intersections[x + 1][y].getAllegiance() > 2) {
@@ -495,6 +498,9 @@ public class Go extends GraphicsProgram {
 	private boolean downBlocked(int x, int y, Intersection start) {
 		if (y + 1 < 0) {
 			return true;
+		} else if (intersections[x][y + 1].getAllegiance() == 0
+				|| intersections[x][y + 1].getAllegiance() > 2) {
+			return false;
 		} else if (intersections[x][y + 1] == start) {
 			return true;
 		} else if (intersections[x][y + 1].getAllegiance() == 0
@@ -504,7 +510,7 @@ public class Go extends GraphicsProgram {
 			if (intersections[x][y + 1].getAllegiance() == 2) {
 				return true;
 			} else {
-				return markedForCapture(x, y - 1, intersections[x][y]);
+				return markedForCapture(x, y + 1, intersections[x][y]);
 			}
 		} else {
 			if (intersections[x][y + 1].getAllegiance() == 1) {
@@ -515,12 +521,6 @@ public class Go extends GraphicsProgram {
 		}
 	}
 	
-	private void test(Intersection test) {
-		println(test == intersections[2][4]);
-		println(test == null);
-		println(intersections[2][4] == null);
-	}
-
 	/*
 	 * Possible additions label 1-19, a-s, accommodate less than 19x19 board
 	 * sizes with this addition
