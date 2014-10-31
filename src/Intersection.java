@@ -36,9 +36,9 @@ public class Intersection {
 	 * Its color is concurrent with that of the player who owns it, and is modified by the setAllegiance method
 	 * It is removed by the Go.java program when it is captured
 	 */
-	public GOval piece;
+	private GOval piece;
 	
-	public boolean marked = false;
+	private boolean marked = false;
 	
 	public Intersection(double xPos, double yPos, double pieceDiameter) {
 		xLocation = xPos;
@@ -76,5 +76,15 @@ public class Intersection {
 	public double getY() {
 		return yLocation;
 	}
-
+	
+	public boolean getMarked() {
+		return marked;
+	}
+	public void setMarked(boolean b) {
+		marked = b;
+	}
+	
+	public GOval getPiece(){
+		return piece;
+	}
 }

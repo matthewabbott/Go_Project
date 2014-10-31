@@ -202,7 +202,7 @@ public class Go extends GraphicsProgram {
 						overwritePreviousAllegiances();
 
 						intersections[i][j].setAllegiance(currentPlayer);
-						add(intersections[i][j].piece);
+						add(intersections[i][j].getPiece());
 
 						pass = 0;
 						capturePieces(i, j);
@@ -310,7 +310,7 @@ public class Go extends GraphicsProgram {
 			for (int j = 0; j < NUM_LINES; j++) {
 				if (intersections[i][j].getAllegiance() == 1
 						|| intersections[i][j].getAllegiance() == 2) {
-					remove(intersections[i][j].piece);
+					remove(intersections[i][j].getPiece());
 				}
 			}
 		}
@@ -321,7 +321,7 @@ public class Go extends GraphicsProgram {
 			for (int j = 0; j < NUM_LINES; j++) {
 				if (intersections[i][j].getAllegiance() == 1
 						|| intersections[i][j].getAllegiance() == 2) {
-					add(intersections[i][j].piece);
+					add(intersections[i][j].getPiece());
 				}
 			}
 		}
@@ -366,37 +366,41 @@ public class Go extends GraphicsProgram {
 	}
 
 	private void capturePieces(int x, int y) {
-		if (intersections[x][y - 1].getAllegiance() == opposingPlayer) {
-			ArrayList<Intersection> chain = new ArrayList<Intersection>();
-			markedForCapture(x, y - 1, chain);
-		}
-		if (intersections[x - 1][y].getAllegiance() == opposingPlayer) {
-			ArrayList<Intersection> chain = new ArrayList<Intersection>();
-			markedForCapture(x - 1, y, chain);
-		}
-		if (intersections[x + 1][y].getAllegiance() == opposingPlayer) {
-			ArrayList<Intersection> chain = new ArrayList<Intersection>();
-			markedForCapture(x + 1, y, chain);
-		}
-		if (intersections[x][y + 1].getAllegiance() == opposingPlayer) {
-			ArrayList<Intersection> chain = new ArrayList<Intersection>();
-			markedForCapture(x, y + 1, chain);
-		}
 
-		for (int i = 0; i < NUM_LINES; i++) {
-			for (int j = 0; j < NUM_LINES; j++) {
-				if (intersections[i][j].marked) {
-					remove(intersections[i][j].piece);
-					intersections[i][j].setAllegiance(currentPlayer + 2);
-					intersections[i][j].marked = false;
+		checkNeighbors(x, y - 1);
+		checkNeighbors(x + 1, y);
+		checkNeighbors(x - 1, y);
+		checkNeighbors(x, y + 1);
+
+	}
+
+	private void checkNeighbors(int x, int y) {
+		if (y >= 0) {
+			if (intersections[x][y].getAllegiance() == opposingPlayer) {
+				ArrayList<Intersection> chain = new ArrayList<Intersection>();
+				markedForCapture(x, y, chain);
+
+				for (int i = 0; i < chain.size(); i++) {
+					if (!chain.get(i).getMarked()) {
+						for (int j = 0; j < chain.size(); j++) {
+							chain.get(j).setMarked(false);
+						}
+						break;
+					}
 				}
+				if (chain.get(0).getMarked()) {
+					for (int i = 0; i < chain.size(); i++) {
+						remove(chain.get(i).getPiece());
+						chain.get(i).setAllegiance(0);
+					}
+				}
+
 			}
 		}
 
 	}
 
-	private ArrayList<Intersection> markedForCapture(int x, int y,
-			ArrayList<Intersection> chain) {
+	private boolean markedForCapture(int x, int y, ArrayList<Intersection> chain) {
 		/*
 		 * if a piece has no 'liberties' that is, empty spaces around it, then
 		 * it is slated to be captured however, if any of its liberties are
@@ -414,6 +418,28 @@ public class Go extends GraphicsProgram {
 		 * capture surrounded by: other pieces that are in the chain arrayList,
 		 * opposingColor pieces, walls, or any combination thereof.
 		 */
+		if (x < 0 || y < 0) {
+			return true;
+		} else if (intersections[x][y].getAllegiance() == currentPlayer) {
+			return true;
+		}
+		if (intersections[x][y].getAllegiance() == 0) {
+			return false;
+		}
+		if (chain.contains(intersections[x][y])) {
+			intersections[x][y].setMarked(true);
+			return true;
+		}
+		chain.add(intersections[x][y]);
+		if (markedForCapture(x, y - 1, chain)
+				&& markedForCapture(x - 1, y, chain)
+				&& markedForCapture(x + 1, y, chain)
+				&& markedForCapture(x, y + 1, chain)) {
+			intersections[x][y].setMarked(true);
+			return true;
+		}
+		intersections[x][y].setMarked(false);
+		return false;
 
 	}
 
