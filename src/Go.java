@@ -174,7 +174,6 @@ public class Go extends GraphicsProgram {
 		}
 	}
 
-
 	/**
 	 * mouseClicked responds to a player clicking the board somewhere, calling
 	 * playerMoved to place a piece if necessary.
@@ -206,7 +205,7 @@ public class Go extends GraphicsProgram {
 						add(intersections[i][j].piece);
 
 						pass = 0;
-						capturePieces();
+						capturePieces(i, j);
 						nextPlayer();
 					}
 
@@ -352,7 +351,7 @@ public class Go extends GraphicsProgram {
 	}
 
 	/**
-	 * overwritePreviousBoard is a void method that stores in an array the
+	 * overwritePreviousAllegiances is a void method that stores in an array the
 	 * allegiance of each piece on the board immediately prior the move that was
 	 * just made by a player. Aside from when the game is initialized, this
 	 * always happens before the game state is changed somehow. It is called
@@ -366,26 +365,22 @@ public class Go extends GraphicsProgram {
 		}
 	}
 
-	private void capturePieces() {
-		for (int i = 0; i < NUM_LINES; i++) {
-			for (int j = 0; j < NUM_LINES; j++) {
-				ArrayList<Intersection> checked = new ArrayList<Intersection>();
-				checked = markedForCapture(i, j, checked);
-				boolean allCheckedPiecesMarked = true;
-				for (int k = 0; k < checked.size(); k++){
-					if (checked.get(k).getAllegiance() == currentPlayer){
-						System.out.println("Something is wrong, checked has pieces of the current player in it");
-					}
-					if (!checked.get(k).marked){
-						allCheckedPiecesMarked = false;
-					}
-				}
-				if (!allCheckedPiecesMarked){
-					for (int k = 0; k < checked.size(); k++){
-						checked.get(k).marked = false;
-					}
-				}
-			}
+	private void capturePieces(int x, int y) {
+		if (intersections[x][y - 1].getAllegiance() == opposingPlayer) {
+			ArrayList<Intersection> chain = new ArrayList<Intersection>();
+			markedForCapture(x, y - 1, chain);
+		}
+		if (intersections[x - 1][y].getAllegiance() == opposingPlayer) {
+			ArrayList<Intersection> chain = new ArrayList<Intersection>();
+			markedForCapture(x - 1, y, chain);
+		}
+		if (intersections[x + 1][y].getAllegiance() == opposingPlayer) {
+			ArrayList<Intersection> chain = new ArrayList<Intersection>();
+			markedForCapture(x + 1, y, chain);
+		}
+		if (intersections[x][y + 1].getAllegiance() == opposingPlayer) {
+			ArrayList<Intersection> chain = new ArrayList<Intersection>();
+			markedForCapture(x, y + 1, chain);
 		}
 
 		for (int i = 0; i < NUM_LINES; i++) {
@@ -398,18 +393,10 @@ public class Go extends GraphicsProgram {
 			}
 		}
 
-//		for (int i = 0; i < NUM_LINES; i++) {
-//			for (int j = 0; j < NUM_LINES; j++) {
-//				if (intersections[i][j].marked) {
-//					intersections[i][j].marked = false;
-//				}
-//			}
-//		}
-
 	}
 
 	private ArrayList<Intersection> markedForCapture(int x, int y,
-			ArrayList<Intersection> checked) {
+			ArrayList<Intersection> chain) {
 		/*
 		 * if a piece has no 'liberties' that is, empty spaces around it, then
 		 * it is slated to be captured however, if any of its liberties are
@@ -421,94 +408,14 @@ public class Go extends GraphicsProgram {
 		 * opposing allegiances recursive step, check adjacent pieces to see if
 		 * they are marked for capture (or of opposing allegiance)
 		 */
-		
-		if(currentPlayer == intersections[x][y].getAllegiance()) {
-			intersections[x][y].marked = false;
-			checked.clear();
-			return checked;
-		}
-		checked.add(intersections[x][y]);
-		if (topBlocked(x, y, checked) && leftBlocked(x, y, checked)
-				&& rightBlocked(x, y, checked) && downBlocked(x, y, checked)) {
-			intersections[x][y].marked = true;
-			return checked;
-		}
-		intersections[x][y].marked = false;
-		return checked;
-	}
-	
-	private boolean topBlocked(int x, int y, ArrayList<Intersection> checked){
-		if (y - 1 < 0){
-			return true;
-		} else if (checked.contains(intersections[x][y - 1]) || intersections[x][y - 1].getAllegiance() == currentPlayer) {
-			return true;
-		} else if (intersections[x][y - 1].getAllegiance() == opposingPlayer) {
-				checked = markedForCapture(x, y - 1, checked);
-				for(int i = 0; i < checked.size(); i++){
-					if (!checked.get(i).marked){
-						return false;
-					}
-				}
-				return true;
-		} else { //if the top territory is not a wall and not a piece then the top is not blocked.
-			return false;
-		}
-	}
-	
-	private boolean leftBlocked(int x, int y, ArrayList<Intersection> checked){
-		if (x - 1 < 0){
-			return true;
-		} else if (checked.contains(intersections[x - 1][y]) || intersections[x - 1][y].getAllegiance() == currentPlayer) {
-			return true;
-		} else if (intersections[x - 1][y].getAllegiance() == opposingPlayer) {
-				checked = markedForCapture(x - 1, y, checked);
-				for(int i = 0; i < checked.size(); i++){
-					if (!checked.get(i).marked){
-						return false;
-					}
-				}
-				return true;
-		} else {
-			return false;
-		}
-	}
-	
-	private boolean downBlocked(int x, int y, ArrayList<Intersection> checked){
-		if (y + 1 >= NUM_LINES){
-			return true;
-		} else if (checked.contains(intersections[x][y + 1]) || intersections[x][y + 1].getAllegiance() == currentPlayer) {
-			return true;
-		} else if (intersections[x][y + 1].getAllegiance() == opposingPlayer) {
-				checked = markedForCapture(x, y + 1, checked);
-				for(int i = 0; i < checked.size(); i++){
-					if (!checked.get(i).marked){
-						return false;
-					}
-				}
-				return true;
-		} else {
-			return false;
-		}
-	}
-	
-	private boolean rightBlocked(int x, int y, ArrayList<Intersection> checked){
-		if (x + 1 >= NUM_LINES){
-			return true;
-		} else if (checked.contains(intersections[x + 1][y]) || intersections[x + 1][y].getAllegiance() == currentPlayer) {
-			return true;
-		} else if (intersections[x + 1][y].getAllegiance() == opposingPlayer) {
-				checked = markedForCapture(x + 1, y, checked);
-				for(int i = 0; i < checked.size(); i++){
-					if (!checked.get(i).marked){
-						return false;
-					}
-				}
-				return true;
-		} else {
-			return false;
-		}
-	}
 
+		/*
+		 * base case: any empty space: result all pieces are not marked for
+		 * capture surrounded by: other pieces that are in the chain arrayList,
+		 * opposingColor pieces, walls, or any combination thereof.
+		 */
+
+	}
 
 	/*
 	 * Possible additions label 1-19, a-s, accommodate less than 19x19 board
