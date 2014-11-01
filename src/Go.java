@@ -140,7 +140,7 @@ public class Go extends GraphicsProgram {
 	 * application window should be
 	 */
 	private void createBoard() {
-		for (int i = 1; i <= NUM_LINES + 1; i++) {
+		for (int i = 1; i < NUM_LINES + 1; i++) {
 			GLine vertLine = new GLine(VERT_LINE_SEP * i, HORIZ_LINE_SEP,
 					VERT_LINE_SEP * i, APPLICATION_HEIGHT - HORIZ_LINE_SEP);
 			GLine horizLine = new GLine(VERT_LINE_SEP, HORIZ_LINE_SEP * i,
@@ -365,6 +365,25 @@ public class Go extends GraphicsProgram {
 		}
 	}
 
+	/**
+	 * capturePieces is a void method that checks to see if any of the pieces
+	 * adjacent to the most recently placed piece are part of a group that
+	 * should be captured, then removes any group as appropriate. Each call of
+	 * checkNeighbors checks a different neighboring intersection for opposing
+	 * allegiance pieces.
+	 * 
+	 * checkNeighbors only needs to be called 4 times since captures can only be
+	 * performed on chains of pieces that are touching the last placed piece.
+	 * However, since the capture methods only operate on pieces not of the
+	 * allegiance of the current player, self capture doesn't happen, the pieces
+	 * that would be self captured are not adjacent to the piece that is next
+	 * played. This is currently an fault in the program.
+	 * 
+	 * @param x
+	 *            the x index of the piece just placed
+	 * @param y
+	 *            the y index of the piece just placed
+	 */
 	private void capturePieces(int x, int y) {
 
 		checkNeighbors(x, y - 1);
@@ -374,8 +393,25 @@ public class Go extends GraphicsProgram {
 
 	}
 
+	/**
+	 * checkNeighbors is a method that performs some of the capture
+	 * functionality. It receives the indices of one of the four intersections
+	 * adjacent to the most recently placed piece. If the intersection has a
+	 * piece of the opposite player's allegiance, then the recursive
+	 * markedForCapture method is called to determine if it should be removed.
+	 * The arrayList chain is altered to store every piece of the same color
+	 * attached to the aforementioned piece, and modifies the marked boolean to
+	 * true for any completely surrounded piece. After, if any piece in the
+	 * arrayList is unmarked, then none of the pieces are captured, whereas if
+	 * every piece is marked, the pieces are all removed.
+	 * 
+	 * @param x
+	 *            the x index of the adjacent piece
+	 * @param y
+	 *            the y index of the adjacent piece
+	 */
 	private void checkNeighbors(int x, int y) {
-		if (y >= 0) {
+		if (y >= 0 && y < NUM_LINES && x >= 0 && x < NUM_LINES) {
 			if (intersections[x][y].getAllegiance() == opposingPlayer) {
 				ArrayList<Intersection> chain = new ArrayList<Intersection>();
 				markedForCapture(x, y, chain);
@@ -400,25 +436,45 @@ public class Go extends GraphicsProgram {
 
 	}
 
+	/**
+	 * markedForCapture is a recursive method that determines if a piece that is
+	 * part of a group should be "marked", which is a boolean that is true if
+	 * the piece has no empty spaces adjacent to it. It modifies the arrayList
+	 * chain to store every intersection that is part of this group of
+	 * same-color pieces, and marks all pieces that should be marked.
+	 * 
+	 * Base case: all edges are either walls, opposing allegiances or previously
+	 * checked pieces. Alternatively, any edge is a space. Recursive step, check
+	 * adjacent pieces to see if they meet the base case, add them to the
+	 * arrayList and mark them as appropriate
+	 * 
+	 * 
+	 * @param x
+	 *            the x index of the piece being checked
+	 * @param y
+	 *            the y index of the piece being checked
+	 * @param chain
+	 *            the arrayList that stores the checked intersections of the
+	 *            chain of pieces
+	 * @return whether or not the previous piece should be marked
+	 */
 	private boolean markedForCapture(int x, int y, ArrayList<Intersection> chain) {
 		/*
-		 * if a piece has no 'liberties' that is, empty spaces around it, then
-		 * it is slated to be captured however, if any of its liberties are
-		 * occupied by a piece of the same color, then it will not be captured
-		 * again however, if those pieces of the same color have no liberties
-		 * they are marked for capture under the same conditions
+		 * Capture rules, for reference: if a piece has no 'liberties' that is,
+		 * empty spaces around it, then it is slated to be captured however, if
+		 * any of its liberties are occupied by a piece of the same color, then
+		 * it will not be captured again however, if those pieces of the same
+		 * color have no liberties they are marked for capture under the same
+		 * conditions
 		 * 
-		 * recursion 4 directions. base case: all edges are either walls or
-		 * opposing allegiances recursive step, check adjacent pieces to see if
-		 * they are marked for capture (or of opposing allegiance)
+		 * Recursion plan: recursion 4 directions. Base case: all edges are
+		 * either walls, opposing allegiances or previously checked pieces.
+		 * Alternatively, any edge is a space Recursive step, check adjacent
+		 * pieces to see if they meet the base case, add them to the arrayList
+		 * as appropriate
 		 */
 
-		/*
-		 * base case: any empty space: result all pieces are not marked for
-		 * capture surrounded by: other pieces that are in the chain arrayList,
-		 * opposingColor pieces, walls, or any combination thereof.
-		 */
-		if (x < 0 || y < 0) {
+		if (x < 0 || y < 0 || y >= NUM_LINES || x >= NUM_LINES) {
 			return true;
 		} else if (intersections[x][y].getAllegiance() == currentPlayer) {
 			return true;
