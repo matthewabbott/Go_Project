@@ -89,10 +89,12 @@ public class Go extends GraphicsProgram {
 	private Intersection[][] intersections;
 
 	/**
-	 * This array contains the board state of the previous turn. If undo is
-	 * pressed, this board state replaces the existing board state
+	 * This ArrayList contains the board state of every previous turn. The most
+	 * recent previous board state is stored in index 0, with each previous turn
+	 * in increasing order. If undo is pressed, the most recent prior board
+	 * state replaces the current one and is removed from this ArrayList
 	 */
-	private int[][] previousAllegiances = new int[NUM_LINES][NUM_LINES];
+	private ArrayList<int[][]> allPreviousAllegiances = new ArrayList<int[][]>();
 
 	/**
 	 * pass stores the number of times a turn has been passed consecutively. It
@@ -100,21 +102,6 @@ public class Go extends GraphicsProgram {
 	 * player passes. Should it reach 2, the game ends as per the rules of Go.
 	 */
 	private int pass = 0;
-
-	/**
-	 * numUndos counts the number of consecutive undos, if that number is
-	 * greater than or equal to the number of previous saved board states, then
-	 * no more undos can happen. If they are attempted, the board wouldn't
-	 * change but the player whose turn it is would, which is unacceptable.
-	 * 
-	 * In the current implementation of this program, only 1 previous board
-	 * state is saved, but in the future the program could be modified to
-	 * accommodate multiple undos. A simple solution would be to simply create
-	 * more previousAllegiances arrays, then use this variable to determine
-	 * which to access, however this seems like a waste of resources for little
-	 * benefit.
-	 */
-	private int numUndos = 1;
 
 	public void init() {
 		createBoard();
@@ -215,7 +202,11 @@ public class Go extends GraphicsProgram {
 
 			}
 		}
-
+		if (breakingKo()) {
+			undo();
+			System.out
+					.println("It is illegal to make a move that repeats the board state of your previous move.");
+		}
 	}
 
 	/**
@@ -283,28 +274,26 @@ public class Go extends GraphicsProgram {
 		if (opposingPlayer > 2) {
 			opposingPlayer = 1;
 		}
-		numUndos = 0;
 	}
 
 	/**
 	 * undo is a method that reverts the previous move made by a player. If undo
 	 * is chosen after a pass, it will only change the turn of the current
-	 * player.
+	 * player. There is no longer any limit on the number of possible undos
 	 */
 	private void undo() {
-		if (numUndos < 1) {
+		if (allPreviousAllegiances.size() > 1) {
 			resetBoard();
 			overwriteIntersections();
 			restoreBoardState();
 			nextPlayer();
-			numUndos++;
 		}
 	}
 
 	/**
 	 * resetBoard is a void method that completely clears the board. It exists
 	 * to make the undo method simpler. It allows the current board to be
-	 * replaced with the previous board, which is done by the restoreBoardState
+	 * replaced with a previous board, which is done by the restoreBoardState
 	 * method.
 	 */
 	private void resetBoard() {
@@ -320,9 +309,10 @@ public class Go extends GraphicsProgram {
 
 	/**
 	 * restoreBoardState is a void method that adds every piece that should be
-	 * on the board to the board according to the intersections array. It
-	 * assumes that the board is currently empty and is only called after
-	 * resetBoard and overwriteIntersections
+	 * on the board to the board according to the first element of the
+	 * allPreviousAllegiances array ArrayList. It assumes that the board is
+	 * currently empty and is only called after resetBoard and
+	 * overwriteIntersections
 	 */
 	private void restoreBoardState() {
 		for (int i = 0; i < NUM_LINES; i++) {
@@ -345,32 +335,59 @@ public class Go extends GraphicsProgram {
 
 	/**
 	 * overwriteIntersections is a void method that replaces every allegiance
-	 * value in intersections with the corresponding value from
-	 * previousAllegiances. It exists to simplify the Undo method, and is called
+	 * value in intersections with the corresponding value from index 0 of
+	 * allPreviousAllegiances. Additionally, it removes that particular board
+	 * state from the ArrayList, now that the game board has been reverted to
+	 * that state. It exists to simplify the Undo method, and is called
 	 * immediately after every existing piece is removed from the board with
 	 * resetBoard.
 	 */
 	private void overwriteIntersections() {
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
-				intersections[i][j].setAllegiance(previousAllegiances[i][j]);
+				intersections[i][j]
+						.setAllegiance(allPreviousAllegiances.get(0)[i][j]);
 			}
 		}
+		allPreviousAllegiances.remove(0);
 	}
 
 	/**
-	 * overwritePreviousAllegiances is a void method that stores in an array the
-	 * allegiance of each piece on the board immediately prior the move that was
-	 * just made by a player. Aside from when the game is initialized, this
-	 * always happens before the game state is changed somehow. It is called
-	 * immediately before a piece is placed or after a player passes their turn.
+	 * overwritePreviousAllegiances is a void method that stores in an ArrayList
+	 * the arrays that contain the allegiance of each piece on the board for
+	 * every single previous board state. It is called immediately before a
+	 * piece is placed or after a player passes their turn, as well as at the
+	 * beginning of the game to store the empty board as the first board state.
 	 */
 	private void overwritePreviousAllegiances() {
+		int[][] previousAllegiances = new int[NUM_LINES][NUM_LINES];
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
 				previousAllegiances[i][j] = intersections[i][j].getAllegiance();
 			}
 		}
+		allPreviousAllegiances.add(0, previousAllegiances);
+	}
+
+	/**
+	 * Ko is a rule in go that prevents a player from making a move that results
+	 * in the board state of their previous turn being repeated. This means that
+	 * if array of allegiances moves ago is the same as the move being made,
+	 * then the move being made is invalid. This method returns false if there
+	 * have not been enough moves in the game for Ko to matter, or if the
+	 * previous turn of that player did not have the same board state.
+	 * 
+	 * @return true if the player has made a move that repeats the board state
+	 *         of their previous move
+	 */
+	private boolean breakingKo() {
+		if (allPreviousAllegiances.size() < 4) {
+			return false;
+		}
+		if (allPreviousAllegiances.get(1).equals(allPreviousAllegiances.get(3))) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
