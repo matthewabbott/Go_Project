@@ -207,6 +207,8 @@ public class Go extends GraphicsProgram {
 						pass = 0;
 						capturePieces(i, j);
 						nextPlayer();
+						checkNeighbors(i, j);
+
 					}
 
 				}
@@ -316,6 +318,12 @@ public class Go extends GraphicsProgram {
 		}
 	}
 
+	/**
+	 * restoreBoardState is a void method that adds every piece that should be
+	 * on the board to the board according to the intersections array. It
+	 * assumes that the board is currently empty and is only called after
+	 * resetBoard and overwriteIntersections
+	 */
 	private void restoreBoardState() {
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
@@ -377,7 +385,8 @@ public class Go extends GraphicsProgram {
 	 * However, since the capture methods only operate on pieces not of the
 	 * allegiance of the current player, self capture doesn't happen, the pieces
 	 * that would be self captured are not adjacent to the piece that is next
-	 * played. This is currently an fault in the program.
+	 * played after the current turn ends and so can never be captured. This is
+	 * currently an fault in the program.
 	 * 
 	 * @param x
 	 *            the x index of the piece just placed
@@ -404,6 +413,14 @@ public class Go extends GraphicsProgram {
 	 * true for any completely surrounded piece. After, if any piece in the
 	 * arrayList is unmarked, then none of the pieces are captured, whereas if
 	 * every piece is marked, the pieces are all removed.
+	 * 
+	 * checkNeighbors is additionally called once more on the last played piece
+	 * itself after the current player allegiance has switched but before that
+	 * player's turn starts in order to check for self capture. Self-capture is
+	 * when a player makes a move that causes a chain of their own pieces to be
+	 * captured. It always occurs after any sort of regular capture, and does
+	 * not occur if the pieces causing the self-capture would be removed by
+	 * regular capture.
 	 * 
 	 * @param x
 	 *            the x index of the adjacent piece
@@ -446,7 +463,7 @@ public class Go extends GraphicsProgram {
 	 * Base case: all edges are either walls, opposing allegiances or previously
 	 * checked pieces. Alternatively, any edge is a space. Recursive step, check
 	 * adjacent pieces to see if they meet the base case, add them to the
-	 * arrayList and mark them as appropriate
+	 * arrayList of previously checked pieces and 'mark' them as appropriate
 	 * 
 	 * 
 	 * @param x
@@ -463,9 +480,9 @@ public class Go extends GraphicsProgram {
 		 * Capture rules, for reference: if a piece has no 'liberties' that is,
 		 * empty spaces around it, then it is slated to be captured however, if
 		 * any of its liberties are occupied by a piece of the same color, then
-		 * it will not be captured again however, if those pieces of the same
+		 * it will not be captured. Again however, if those pieces of the same
 		 * color have no liberties they are marked for capture under the same
-		 * conditions
+		 * conditions and all pieces will be captured.
 		 * 
 		 * Recursion plan: recursion 4 directions. Base case: all edges are
 		 * either walls, opposing allegiances or previously checked pieces.
