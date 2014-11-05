@@ -112,8 +112,9 @@ public class Go extends GraphicsProgram {
 	private boolean usingKo;
 
 	public void init() {
-		IODialog dialog = getDialog();
-		usingKo = dialog.readBoolean("True for Ko, False for superko");
+
+		usingKo = (koDialogResponse() == 0);
+
 		createBoard();
 		initializeIntersections();
 		overwritePreviousAllegiances();
@@ -123,6 +124,38 @@ public class Go extends GraphicsProgram {
 		add(new JButton("Pass"), NORTH);
 		add(new JButton("End Game"), NORTH);
 		addActionListeners();
+
+	}
+
+	/**
+	 * koDialogResponse is an int method that returns the integer corresponding
+	 * the the response a user chooses after being prompted with a JOptionPane.
+	 * Ko is n == 0, Superko is 1. If the user clicks the option asking what ko
+	 * and superko are, n = 2, another dialog window pops up explaining the
+	 * rules, and the while loop restarts, asking the user again.
+	 * 
+	 * @return the user's response, 0 if ko, 1 if superko
+	 */
+	private int koDialogResponse() {
+		String[] options = { "Ko", "Superko", "What are these things?" };
+		int n = -1;
+		while (n == -1) { // n is -1 if the user doesn't choose an option
+			n = JOptionPane.showOptionDialog(this,
+					"Are you using Ko or Superko for this game?", "Rules",
+					JOptionPane.YES_NO_CANCEL_OPTION,
+					JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+			if (n == 2) { // user asks what Ko and Superko are
+				n = -1;
+				JOptionPane
+						.showMessageDialog(
+								this,
+								"Under Ko, you cannot make a move that would cause the board "
+										+ "\nto be layed out the same way it was after your previous move."
+										+ " \nUnder Superko, no previous board layout can ever be repeated.",
+								"Rules", JOptionPane.PLAIN_MESSAGE);
+			}
+		}
+		return n;
 	}
 
 	/** testing stuff */
@@ -213,17 +246,35 @@ public class Go extends GraphicsProgram {
 			}
 		}
 
+		koCheck();
+
+	}
+
+	/**
+	 * koCheck is a void method that checks if the move the player made breaks
+	 * the Ko or Superko rule, depending on which is being used in this game. If
+	 * the player is breaking either rule, a quick JOptionPane message dialog
+	 * will pop up mentioning that they repeated a/the previous board state
+	 * depending on whether superko or ko are being used, respectively.
+	 */
+	private void koCheck() {
 		if (usingKo) {
 			if (breakingKo()) {
 				undo();
-				System.out
-						.println("It is illegal to make a move that repeats the board state of your previous move.");
+				JOptionPane
+						.showMessageDialog(
+								this,
+								"It is illegal to make a move that repeats the board state of your previous move.",
+								"Rules", JOptionPane.PLAIN_MESSAGE);
 			}
 		} else {
 			if (breakingSuperko()) {
 				undo();
-				System.out
-						.println("It is illegal to make a move that repeats the board state of any previous move.");
+				JOptionPane
+						.showMessageDialog(
+								this,
+								"It is illegal to make a move that repeats the board state of any previous move.",
+								"Rules", JOptionPane.PLAIN_MESSAGE);
 			}
 		}
 	}
@@ -389,13 +440,14 @@ public class Go extends GraphicsProgram {
 	}
 
 	/**
-	 * breakingKo is a boolean method that enforces the Ko rule. Ko is a rule in
-	 * go that prevents a player from making a move that results in the board
-	 * state of their previous turn being repeated. This means that if the array
-	 * of allegiances 2 moves ago is the same as that of th move being made,
-	 * then the move being made is invalid. This method returns false if there
-	 * have not been enough moves in the game for Ko to matter, or if the
-	 * previous turn of that player did not have the same board state.
+	 * breakingKo is a boolean method helps enforce the Ko rule in the koCheck
+	 * method. Ko is a rule in go that prevents a player from making a move that
+	 * results in the board state of their previous turn being repeated. This
+	 * means that if the array of allegiances 2 moves ago is the same as that of
+	 * th move being made, then the move being made is invalid. This method
+	 * returns false if there have not been enough moves in the game for Ko to
+	 * matter, or if the previous turn of that player did not have the same
+	 * board state.
 	 * 
 	 * @return true if the player has made a move that repeats the board state
 	 *         of their previous move
@@ -592,6 +644,10 @@ public class Go extends GraphicsProgram {
 	}
 
 	/*
+	 * JFrame for options ko vs superko handicap, black gets extra moves scoring
+	 * handicap, white gets + x.5 points at the end, where x is input by the
+	 * players board size, defaulting to 19x19
+	 * 
 	 * Possible additions label 1-19, a-s, accommodate less than 19x19 board
 	 * sizes with this addition
 	 */
