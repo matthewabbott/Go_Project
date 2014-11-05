@@ -32,6 +32,7 @@ import java.awt.event.*;
 import java.util.*;
 
 import acm.graphics.*;
+import acm.io.IODialog;
 import acm.program.*;
 import acm.util.*;
 
@@ -103,7 +104,16 @@ public class Go extends GraphicsProgram {
 	 */
 	private int pass = 0;
 
+	/**
+	 * Determines whether the game should use Ko or Superko rules. Superko is a
+	 * rule that states that no previous board state can ever be repeated. Ko
+	 * means that only the board state of the previous turn cannot be repeated.
+	 */
+	private boolean usingKo;
+
 	public void init() {
+		IODialog dialog = getDialog();
+		usingKo = dialog.readBoolean("True for Ko, False for superko");
 		createBoard();
 		initializeIntersections();
 		overwritePreviousAllegiances();
@@ -203,10 +213,18 @@ public class Go extends GraphicsProgram {
 			}
 		}
 
-		if (breakingKo()) {
-			undo();
-			System.out
-					.println("It is illegal to make a move that repeats the board state of your previous move.");
+		if (usingKo) {
+			if (breakingKo()) {
+				undo();
+				System.out
+						.println("It is illegal to make a move that repeats the board state of your previous move.");
+			}
+		} else {
+			if (breakingSuperko()) {
+				undo();
+				System.out
+						.println("It is illegal to make a move that repeats the board state of any previous move.");
+			}
 		}
 	}
 
@@ -371,12 +389,13 @@ public class Go extends GraphicsProgram {
 	}
 
 	/**
-	 * Ko is a rule in go that prevents a player from making a move that results
-	 * in the board state of their previous turn being repeated. This means that
-	 * if the array of allegiances 2 moves ago is the same as that of th move
-	 * being made, then the move being made is invalid. This method returns
-	 * false if there have not been enough moves in the game for Ko to matter,
-	 * or if the previous turn of that player did not have the same board state.
+	 * breakingKo is a boolean method that enforces the Ko rule. Ko is a rule in
+	 * go that prevents a player from making a move that results in the board
+	 * state of their previous turn being repeated. This means that if the array
+	 * of allegiances 2 moves ago is the same as that of th move being made,
+	 * then the move being made is invalid. This method returns false if there
+	 * have not been enough moves in the game for Ko to matter, or if the
+	 * previous turn of that player did not have the same board state.
 	 * 
 	 * @return true if the player has made a move that repeats the board state
 	 *         of their previous move
@@ -385,16 +404,48 @@ public class Go extends GraphicsProgram {
 		if (allPreviousAllegiances.size() < 2) {
 			return false;
 		}
-		for (int i = 0; i < NUM_LINES; i++){
-			for (int j = 0; j < NUM_LINES; j++){
-				
-				if (intersections[i][j].getAllegiance() != allPreviousAllegiances.get(1)[i][j]){
+		for (int i = 0; i < NUM_LINES; i++) {
+			for (int j = 0; j < NUM_LINES; j++) {
+
+				if (intersections[i][j].getAllegiance() != allPreviousAllegiances
+						.get(1)[i][j]) {
 					return false;
 				}
-				
+
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * breakingSuperko is the same as breakingKo, except it checks for every
+	 * previous board rather than just the board from the previous move.
+	 * 
+	 * @return true if the player has made a move that repeats the board state
+	 *         of any previous move
+	 */
+	private boolean breakingSuperko() {
+		if (allPreviousAllegiances.size() < 2) {
+			return false;
+		}
+
+		for (int i = 0; i < allPreviousAllegiances.size(); i++) {
+			boolean arraysSame = true;
+			for (int j = 0; j < NUM_LINES; j++) {
+				for (int k = 0; k < NUM_LINES; k++) {
+
+					if (intersections[j][k].getAllegiance() != allPreviousAllegiances
+							.get(i)[j][k]) {
+						arraysSame = false;
+					}
+
+				}
+			}
+			if (arraysSame) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
