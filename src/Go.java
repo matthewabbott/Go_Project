@@ -421,17 +421,17 @@ public class Go extends GraphicsProgram {
 	}
 
 	private String determineWinner() {
-//		ArrayList<Intersection> space = new ArrayList<Intersection>();
-//		for (int i = 0; i < NUM_LINES; i++) {
-//			for (int j = 0; j < NUM_LINES; j++){
-//				
-//				if (intersections[i][j].getAllegiance() == 0 && !space.contains(intersections[i][j])){
-//					determineTerritory(i, j);
-//				}
-//				
-//			}
-//		}
-//		
+		ArrayList<Intersection> space = new ArrayList<Intersection>();
+		for (int i = 0; i < NUM_LINES; i++) {
+			for (int j = 0; j < NUM_LINES; j++){
+				
+				if (intersections[i][j].getAllegiance() == 0 && !space.contains(intersections[i][j])){
+					determineTerritory(i, j);
+				}
+				
+			}
+		}
+		
 		if (currentPlayer == 1) {
 			return "black";
 		} else {
@@ -442,28 +442,28 @@ public class Go extends GraphicsProgram {
 	
 	private int determineTerritory(int x, int y){
 		
-//		if (y >= 0 && y < NUM_LINES && x >= 0 && x < NUM_LINES) {
-//			if (intersections[x][y].getAllegiance() == opposingPlayer) {
-//				ArrayList<Intersection> chain = new ArrayList<Intersection>();
-//				markedForCapture(x, y, chain);
-//
-//				for (int i = 0; i < chain.size(); i++) {
-//					if (!chain.get(i).getMarked()) {
-//						for (int j = 0; j < chain.size(); j++) {
-//							chain.get(j).setMarked(false);
-//						}
-//						break;
-//					}
-//				}
-//				if (chain.get(0).getMarked()) {
-//					for (int i = 0; i < chain.size(); i++) {
-//						remove(chain.get(i).getPiece());
-//						chain.get(i).setAllegiance(0);
-//					}
-//				}
-//
-//			}
-//		}
+		if (y >= 0 && y < NUM_LINES && x >= 0 && x < NUM_LINES) {
+			if (intersections[x][y].getAllegiance() == opposingPlayer) {
+				ArrayList<Intersection> chain = new ArrayList<Intersection>();
+				markedForCapture(x, y, chain);
+
+				for (int i = 0; i < chain.size(); i++) {
+					if (!chain.get(i).getMarked()) {
+						for (int j = 0; j < chain.size(); j++) {
+							chain.get(j).setMarked(false);
+						}
+						break;
+					}
+				}
+				if (chain.get(0).getMarked()) {
+					for (int i = 0; i < chain.size(); i++) {
+						remove(chain.get(i).getPiece());
+						chain.get(i).setAllegiance(0);
+					}
+				}
+
+			}
+		}
 		return 3;
 	}
 
