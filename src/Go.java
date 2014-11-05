@@ -29,7 +29,7 @@ package src;
 import java.applet.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
+import java.util.*;
 
 import acm.graphics.*;
 import acm.program.*;
@@ -202,6 +202,7 @@ public class Go extends GraphicsProgram {
 
 			}
 		}
+
 		if (breakingKo()) {
 			undo();
 			System.out
@@ -372,22 +373,28 @@ public class Go extends GraphicsProgram {
 	/**
 	 * Ko is a rule in go that prevents a player from making a move that results
 	 * in the board state of their previous turn being repeated. This means that
-	 * if array of allegiances moves ago is the same as the move being made,
-	 * then the move being made is invalid. This method returns false if there
-	 * have not been enough moves in the game for Ko to matter, or if the
-	 * previous turn of that player did not have the same board state.
+	 * if the array of allegiances 2 moves ago is the same as that of th move
+	 * being made, then the move being made is invalid. This method returns
+	 * false if there have not been enough moves in the game for Ko to matter,
+	 * or if the previous turn of that player did not have the same board state.
 	 * 
 	 * @return true if the player has made a move that repeats the board state
 	 *         of their previous move
 	 */
 	private boolean breakingKo() {
-		if (allPreviousAllegiances.size() < 4) {
+		if (allPreviousAllegiances.size() < 2) {
 			return false;
 		}
-		if (allPreviousAllegiances.get(1).equals(allPreviousAllegiances.get(3))) {
-			return true;
+		for (int i = 0; i < NUM_LINES; i++){
+			for (int j = 0; j < NUM_LINES; j++){
+				
+				if (intersections[i][j].getAllegiance() != allPreviousAllegiances.get(1)[i][j]){
+					return false;
+				}
+				
+			}
 		}
-		return false;
+		return true;
 	}
 
 	/**
