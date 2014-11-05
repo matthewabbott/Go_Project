@@ -32,7 +32,6 @@ import java.awt.event.*;
 import java.util.*;
 
 import acm.graphics.*;
-import acm.io.IODialog;
 import acm.program.*;
 import acm.util.*;
 
