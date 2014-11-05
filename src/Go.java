@@ -110,6 +110,9 @@ public class Go extends GraphicsProgram {
 	 */
 	private boolean usingKo;
 
+	/** If the game is over, gameOver is true */
+	private boolean gameOver = false;
+
 	public void init() {
 
 		usingKo = (koDialogResponse() == 0);
@@ -219,34 +222,35 @@ public class Go extends GraphicsProgram {
 	 * another click or button press.
 	 */
 	private void playerMoved(MouseEvent e) {
-		for (int i = 0; i < NUM_LINES; i++) {
-			for (int j = 0; j < NUM_LINES; j++) {
+		if (!gameOver) {
+			for (int i = 0; i < NUM_LINES; i++) {
+				for (int j = 0; j < NUM_LINES; j++) {
 
-				if (intersectionClicked(intersections[i][j].getX(),
-						intersections[i][j].getY(), e.getX(), e.getY())) {
+					if (intersectionClicked(intersections[i][j].getX(),
+							intersections[i][j].getY(), e.getX(), e.getY())) {
 
-					if (intersections[i][j].getAllegiance() != 1
-							&& intersections[i][j].getAllegiance() != 2) {
+						if (intersections[i][j].getAllegiance() != 1
+								&& intersections[i][j].getAllegiance() != 2) {
 
-						overwritePreviousAllegiances();
+							overwritePreviousAllegiances();
 
-						intersections[i][j].setAllegiance(currentPlayer);
-						add(intersections[i][j].getPiece());
+							intersections[i][j].setAllegiance(currentPlayer);
+							add(intersections[i][j].getPiece());
 
-						pass = 0;
-						capturePieces(i, j);
-						nextPlayer();
-						checkNeighbors(i, j);
+							pass = 0;
+							capturePieces(i, j);
+							nextPlayer();
+							checkNeighbors(i, j);
+
+						}
 
 					}
 
 				}
-
 			}
+
+			koCheck();
 		}
-
-		koCheck();
-
 	}
 
 	/**
@@ -357,6 +361,7 @@ public class Go extends GraphicsProgram {
 			restoreBoardState();
 			nextPlayer();
 		}
+		gameOver = false;
 	}
 
 	/**
@@ -396,10 +401,70 @@ public class Go extends GraphicsProgram {
 
 	/**
 	 * the endGame method is a void method called in response to the game
-	 * ending. It causes the score to be tallied and determines the winner.
+	 * ending. It causes the score to be tallied and determines the winner. It
+	 * then creates a message dialog that states the winner. After the winner
+	 * has been chosen, players can no longer place pieces on the board, but if
+	 * they press undo, the gameOver variable is reset to false and the players
+	 * can play again from that point.
 	 */
 	private void endGame() {
+		gameOver = true;
+		String gameWinner = determineWinner();
+		JOptionPane
+				.showMessageDialog(
+						this,
+						"The game is over and "
+								+ gameWinner
+								+ " has won. \nHowever, you can still click undo to keep the game going",
+						("Victory for " + gameWinner),
+						JOptionPane.PLAIN_MESSAGE);
+	}
 
+	private String determineWinner() {
+//		ArrayList<Intersection> space = new ArrayList<Intersection>();
+//		for (int i = 0; i < NUM_LINES; i++) {
+//			for (int j = 0; j < NUM_LINES; j++){
+//				
+//				if (intersections[i][j].getAllegiance() == 0 && !space.contains(intersections[i][j])){
+//					determineTerritory(i, j);
+//				}
+//				
+//			}
+//		}
+//		
+		if (currentPlayer == 1) {
+			return "black";
+		} else {
+			return "white";
+		}
+
+	}
+	
+	private int determineTerritory(int x, int y){
+		
+//		if (y >= 0 && y < NUM_LINES && x >= 0 && x < NUM_LINES) {
+//			if (intersections[x][y].getAllegiance() == opposingPlayer) {
+//				ArrayList<Intersection> chain = new ArrayList<Intersection>();
+//				markedForCapture(x, y, chain);
+//
+//				for (int i = 0; i < chain.size(); i++) {
+//					if (!chain.get(i).getMarked()) {
+//						for (int j = 0; j < chain.size(); j++) {
+//							chain.get(j).setMarked(false);
+//						}
+//						break;
+//					}
+//				}
+//				if (chain.get(0).getMarked()) {
+//					for (int i = 0; i < chain.size(); i++) {
+//						remove(chain.get(i).getPiece());
+//						chain.get(i).setAllegiance(0);
+//					}
+//				}
+//
+//			}
+//		}
+		return 3;
 	}
 
 	/**
