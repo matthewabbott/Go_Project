@@ -46,7 +46,6 @@ public class Intersection {
 		yLocation = yPos;
 		piece = new GOval(xLocation - pieceDiameter/2, yLocation - pieceDiameter/2, pieceDiameter, pieceDiameter);
 		allegiance = 0;
-//		this.pieceDiameter = pieceDiameter;
 	}
 	
 	public int getAllegiance() {
@@ -63,9 +62,9 @@ public class Intersection {
 	public void setAllegiance(int player) {
 		allegiance = player;
 		piece.setFilled(true);
-		if (player == 1){
+		if (player == 1) {
 			piece.setFillColor(Color.BLACK);
-		} else if (player == 2){
+		} else if (player == 2) {
 			piece.setFillColor(Color.WHITE);
 		}
 	}
