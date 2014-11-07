@@ -122,6 +122,7 @@ public class Go extends GraphicsProgram {
 		overwritePreviousAllegiances();
 
 		addMouseListeners();
+
 		add(new JButton("Undo"), NORTH);
 		add(new JButton("Pass"), NORTH);
 		add(new JButton("End Game"), NORTH);
@@ -175,8 +176,10 @@ public class Go extends GraphicsProgram {
 		for (int i = 1; i < NUM_LINES + 1; i++) {
 			GLine vertLine = new GLine(VERT_LINE_SEP * i, HORIZ_LINE_SEP,
 					VERT_LINE_SEP * i, APPLICATION_HEIGHT - HORIZ_LINE_SEP);
+
 			GLine horizLine = new GLine(VERT_LINE_SEP, HORIZ_LINE_SEP * i,
 					APPLICATION_WIDTH - VERT_LINE_SEP, HORIZ_LINE_SEP * i);
+
 			horizLine.setColor(Color.BLACK);
 			vertLine.setColor(Color.BLACK);
 			add(vertLine);
@@ -200,9 +203,11 @@ public class Go extends GraphicsProgram {
 		intersections = new Intersection[NUM_LINES][NUM_LINES];
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
+
 				intersections[i][j] = new Intersection(VERT_LINE_SEP * (i + 1),
 						HORIZ_LINE_SEP * (j + 1), PIECE_DIAMETER);
 			}
+
 		}
 	}
 
@@ -223,6 +228,7 @@ public class Go extends GraphicsProgram {
 	 */
 	private void playerMoved(MouseEvent e) {
 		if (!gameOver) {
+
 			for (int i = 0; i < NUM_LINES; i++) {
 				for (int j = 0; j < NUM_LINES; j++) {
 
@@ -262,6 +268,7 @@ public class Go extends GraphicsProgram {
 	 */
 	private void koCheck() {
 		if (usingKo) {
+
 			if (breakingKo()) {
 				undo();
 				JOptionPane
@@ -270,6 +277,7 @@ public class Go extends GraphicsProgram {
 								"It is illegal to make a move that repeats the board state of your previous move.",
 								"Rules", JOptionPane.PLAIN_MESSAGE);
 			}
+
 		} else {
 			if (breakingSuperko()) {
 				undo();
@@ -279,6 +287,7 @@ public class Go extends GraphicsProgram {
 								"It is illegal to make a move that repeats the board state of any previous move.",
 								"Rules", JOptionPane.PLAIN_MESSAGE);
 			}
+
 		}
 	}
 
@@ -317,16 +326,20 @@ public class Go extends GraphicsProgram {
 	 */
 	public void actionPerformed(ActionEvent e) {
 		if ("Pass".equals(e.getActionCommand())) {
+
 			pass++;
 			if (pass >= 2) {
 				endGame();
 			}
+
 			overwritePreviousAllegiances();
 			nextPlayer();
 		}
+
 		if ("Undo".equals(e.getActionCommand())) {
 			undo();
 		}
+
 		if ("End Game".equals(e.getActionCommand())) {
 			endGame();
 		}
@@ -339,10 +352,12 @@ public class Go extends GraphicsProgram {
 	 * or to a turn being passed.
 	 */
 	private void nextPlayer() {
+
 		currentPlayer++;
 		if (currentPlayer > 2) {
 			currentPlayer = 1;
 		}
+
 		opposingPlayer++;
 		if (opposingPlayer > 2) {
 			opposingPlayer = 1;
@@ -355,12 +370,16 @@ public class Go extends GraphicsProgram {
 	 * player. There is no longer any limit on the number of possible undos
 	 */
 	private void undo() {
+
 		if (allPreviousAllegiances.size() > 1) {
+
 			resetBoard();
 			overwriteIntersections();
 			restoreBoardState();
 			nextPlayer();
+
 		}
+
 		gameOver = false;
 	}
 
@@ -373,10 +392,14 @@ public class Go extends GraphicsProgram {
 	private void resetBoard() {
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
+
 				if (intersections[i][j].getAllegiance() == 1
 						|| intersections[i][j].getAllegiance() == 2) {
+
 					remove(intersections[i][j].getPiece());
+
 				}
+
 			}
 		}
 	}
@@ -391,15 +414,17 @@ public class Go extends GraphicsProgram {
 	private void restoreBoardState() {
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
+
 				if (intersections[i][j].getAllegiance() == 1
 						|| intersections[i][j].getAllegiance() == 2) {
+
 					add(intersections[i][j].getPiece());
+
 				}
+
 			}
 		}
 	}
-
-	
 
 	/**
 	 * overwriteIntersections is a void method that replaces every allegiance
@@ -411,12 +436,16 @@ public class Go extends GraphicsProgram {
 	 * resetBoard.
 	 */
 	private void overwriteIntersections() {
+
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
+
 				intersections[i][j]
 						.setAllegiance(allPreviousAllegiances.get(0)[i][j]);
+
 			}
 		}
+
 		allPreviousAllegiances.remove(0);
 	}
 
@@ -428,12 +457,17 @@ public class Go extends GraphicsProgram {
 	 * beginning of the game to store the empty board as the first board state.
 	 */
 	private void overwritePreviousAllegiances() {
+
 		int[][] previousAllegiances = new int[NUM_LINES][NUM_LINES];
+
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
+
 				previousAllegiances[i][j] = intersections[i][j].getAllegiance();
+
 			}
 		}
+
 		allPreviousAllegiances.add(0, previousAllegiances);
 	}
 
@@ -451,9 +485,11 @@ public class Go extends GraphicsProgram {
 	 *         of their previous move
 	 */
 	private boolean breakingKo() {
+
 		if (allPreviousAllegiances.size() < 2) {
 			return false;
 		}
+
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
 
@@ -475,12 +511,14 @@ public class Go extends GraphicsProgram {
 	 *         of any previous move
 	 */
 	private boolean breakingSuperko() {
+
 		if (allPreviousAllegiances.size() < 2) {
 			return false;
 		}
 
 		for (int i = 0; i < allPreviousAllegiances.size(); i++) {
 			boolean arraysSame = true;
+
 			for (int j = 0; j < NUM_LINES; j++) {
 				for (int k = 0; k < NUM_LINES; k++) {
 
@@ -491,6 +529,7 @@ public class Go extends GraphicsProgram {
 
 				}
 			}
+
 			if (arraysSame) {
 				return true;
 			}
@@ -553,8 +592,11 @@ public class Go extends GraphicsProgram {
 	 *            the y index of the adjacent piece
 	 */
 	private void checkNeighbors(int x, int y) {
+
 		if (y >= 0 && y < NUM_LINES && x >= 0 && x < NUM_LINES) {
+
 			if (intersections[x][y].getAllegiance() == opposingPlayer) {
+
 				ArrayList<Intersection> chain = new ArrayList<Intersection>();
 				markedForCapture(x, y, chain);
 
@@ -566,6 +608,7 @@ public class Go extends GraphicsProgram {
 						break;
 					}
 				}
+
 				if (chain.get(0).getMarked()) {
 					for (int i = 0; i < chain.size(); i++) {
 						remove(chain.get(i).getPiece());
@@ -574,6 +617,7 @@ public class Go extends GraphicsProgram {
 				}
 
 			}
+
 		}
 
 	}
@@ -618,29 +662,38 @@ public class Go extends GraphicsProgram {
 
 		if (x < 0 || y < 0 || y >= NUM_LINES || x >= NUM_LINES) {
 			return true;
+
 		} else if (intersections[x][y].getAllegiance() == currentPlayer) {
 			return true;
+
 		}
 		if (intersections[x][y].getAllegiance() == 0) {
 			return false;
+
 		}
 		if (chain.contains(intersections[x][y])) {
 			intersections[x][y].setMarked(true);
 			return true;
+
 		}
+
 		chain.add(intersections[x][y]);
+
 		if (markedForCapture(x, y - 1, chain)
 				&& markedForCapture(x - 1, y, chain)
 				&& markedForCapture(x + 1, y, chain)
 				&& markedForCapture(x, y + 1, chain)) {
+
 			intersections[x][y].setMarked(true);
 			return true;
+
 		}
+
 		intersections[x][y].setMarked(false);
 		return false;
 
 	}
-	
+
 	/**
 	 * the endGame method is a void method called in response to the game
 	 * ending. It causes the score to be tallied and determines the winner. It
@@ -651,7 +704,9 @@ public class Go extends GraphicsProgram {
 	 */
 	private void endGame() {
 		gameOver = true;
+
 		int lastPlayer = currentPlayer; // stores the current player
+
 		String gameWinner = determineWinner();
 		JOptionPane
 				.showMessageDialog(
@@ -711,48 +766,6 @@ public class Go extends GraphicsProgram {
 		} else {
 			return "neither player";
 		}
-
-	}
-
-	/**
-	 * determineTerritory is a modified version of markedForCapture that
-	 * recursively checks each space to see if it is surrounded by pieces owned
-	 * by the current player. It changes the marked variable of every space that
-	 * is surrounded by previously checked spaces, walls or pieces of the
-	 * allegiance of the current player to true. If any space in the ArrayList
-	 * chain is unmarked, that means it was connected to a piece of the opposing
-	 * player's color. This means that in the checkCurrentPlayerTerritory
-	 * method, every space will be unmarked and their allegiances will not be
-	 * changed to the territory of the current player
-	 */
-	private boolean determineTerritory(int x, int y,
-			ArrayList<Intersection> chain) {
-		/*
-		 *
-		 */
-
-		if (x < 0 || y < 0 || y >= NUM_LINES || x >= NUM_LINES) {
-			return true;
-		} else if (intersections[x][y].getAllegiance() == currentPlayer) {
-			return true;
-		}
-		if (intersections[x][y].getAllegiance() == opposingPlayer) {
-			return false;
-		}
-		if (chain.contains(intersections[x][y])) {
-			intersections[x][y].setMarked(true);
-			return true;
-		}
-		chain.add(intersections[x][y]);
-		if (determineTerritory(x, y - 1, chain)
-				&& determineTerritory(x - 1, y, chain)
-				&& determineTerritory(x + 1, y, chain)
-				&& determineTerritory(x, y + 1, chain)) {
-			intersections[x][y].setMarked(true);
-			return true;
-		}
-		intersections[x][y].setMarked(false);
-		return false;
 
 	}
 
@@ -861,8 +874,45 @@ public class Go extends GraphicsProgram {
 		}
 		return false;
 	}
-	
-	
+
+	/**
+	 * determineTerritory is a modified version of markedForCapture that
+	 * recursively checks each space to see if it is surrounded by pieces owned
+	 * by the current player. It changes the marked variable of every space that
+	 * is surrounded by previously checked spaces, walls or pieces of the
+	 * allegiance of the current player to true. If any space in the ArrayList
+	 * chain is unmarked, that means it was connected to a piece of the opposing
+	 * player's color. This means that in the checkCurrentPlayerTerritory
+	 * method, every space will be unmarked and their allegiances will not be
+	 * changed to the territory of the current player
+	 */
+	private boolean determineTerritory(int x, int y,
+			ArrayList<Intersection> chain) {
+
+		if (x < 0 || y < 0 || y >= NUM_LINES || x >= NUM_LINES) {
+			return true;
+		} else if (intersections[x][y].getAllegiance() == currentPlayer) {
+			return true;
+		}
+		if (intersections[x][y].getAllegiance() == opposingPlayer) {
+			return false;
+		}
+		if (chain.contains(intersections[x][y])) {
+			intersections[x][y].setMarked(true);
+			return true;
+		}
+		chain.add(intersections[x][y]);
+		if (determineTerritory(x, y - 1, chain)
+				&& determineTerritory(x - 1, y, chain)
+				&& determineTerritory(x + 1, y, chain)
+				&& determineTerritory(x, y + 1, chain)) {
+			intersections[x][y].setMarked(true);
+			return true;
+		}
+		intersections[x][y].setMarked(false);
+		return false;
+
+	}
 
 	/*
 	 * JFrame for options ko vs superko handicap, black gets extra moves scoring
