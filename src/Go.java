@@ -399,73 +399,7 @@ public class Go extends GraphicsProgram {
 		}
 	}
 
-	/**
-	 * the endGame method is a void method called in response to the game
-	 * ending. It causes the score to be tallied and determines the winner. It
-	 * then creates a message dialog that states the winner. After the winner
-	 * has been chosen, players can no longer place pieces on the board, but if
-	 * they press undo, the gameOver variable is reset to false and the players
-	 * can play again from that point.
-	 */
-	private void endGame() {
-		gameOver = true;
-		String gameWinner = determineWinner();
-		JOptionPane
-				.showMessageDialog(
-						this,
-						"The game is over and "
-								+ gameWinner
-								+ " has won. \nHowever, you can still click undo to keep the game going",
-						("Victory for " + gameWinner),
-						JOptionPane.PLAIN_MESSAGE);
-	}
-
-	private String determineWinner() {
-		ArrayList<Intersection> space = new ArrayList<Intersection>();
-		for (int i = 0; i < NUM_LINES; i++) {
-			for (int j = 0; j < NUM_LINES; j++){
-				
-				if (intersections[i][j].getAllegiance() == 0 && !space.contains(intersections[i][j])){
-					determineTerritory(i, j);
-				}
-				
-			}
-		}
-		
-		if (currentPlayer == 1) {
-			return "black";
-		} else {
-			return "white";
-		}
-
-	}
 	
-	private int determineTerritory(int x, int y){
-		
-		if (y >= 0 && y < NUM_LINES && x >= 0 && x < NUM_LINES) {
-			if (intersections[x][y].getAllegiance() == opposingPlayer) {
-				ArrayList<Intersection> chain = new ArrayList<Intersection>();
-				markedForCapture(x, y, chain);
-
-				for (int i = 0; i < chain.size(); i++) {
-					if (!chain.get(i).getMarked()) {
-						for (int j = 0; j < chain.size(); j++) {
-							chain.get(j).setMarked(false);
-						}
-						break;
-					}
-				}
-				if (chain.get(0).getMarked()) {
-					for (int i = 0; i < chain.size(); i++) {
-						remove(chain.get(i).getPiece());
-						chain.get(i).setAllegiance(0);
-					}
-				}
-
-			}
-		}
-		return 3;
-	}
 
 	/**
 	 * overwriteIntersections is a void method that replaces every allegiance
@@ -706,6 +640,229 @@ public class Go extends GraphicsProgram {
 		return false;
 
 	}
+	
+	/**
+	 * the endGame method is a void method called in response to the game
+	 * ending. It causes the score to be tallied and determines the winner. It
+	 * then creates a message dialog that states the winner. After the winner
+	 * has been chosen, players can no longer place pieces on the board, but if
+	 * they press undo, the gameOver variable is reset to false and the players
+	 * can play again from that point.
+	 */
+	private void endGame() {
+		gameOver = true;
+		int lastPlayer = currentPlayer; // stores the current player
+		String gameWinner = determineWinner();
+		JOptionPane
+				.showMessageDialog(
+						this,
+						"The game is over and "
+								+ gameWinner
+								+ " has won. \nHowever, you can still click undo to keep the game going",
+						("Victory for " + gameWinner),
+						JOptionPane.PLAIN_MESSAGE);
+
+		/*
+		 * Returns currentPlayer and opposingPlayer to normal so players can
+		 * keep playing if they press undo.
+		 */
+		currentPlayer = lastPlayer;
+		opposingPlayer = currentPlayer + 1;
+		if (opposingPlayer == 3) {
+			opposingPlayer = 1;
+		}
+	}
+
+	/**
+	 * determineWinner is a String method that returns a string with the name of
+	 * the color of the player that won. It checks every intersection in the
+	 * game to see what territory it belongs to. If the intersection has been
+	 * previously checked or was already claimed by a player (allegiance == 1 or
+	 * 2, the intersection has a piece on it) it is ignored, otherwise it is
+	 * checked by setColorTerritory and is changed to the corresponding
+	 * allegiance of the player that owns it, along with every other
+	 * intersection that was connected to it. (allegiance 3 is black territory,
+	 * 4 is white, 5 is unaligned/neutral)
+	 * 
+	 * @return the color of the winner
+	 */
+	private String determineWinner() {
+
+		for (int i = 0; i < NUM_LINES; i++) {
+			for (int j = 0; j < NUM_LINES; j++) {
+
+				if (intersections[i][j].getAllegiance() == 0) {
+					setColorTerritory(i, j);
+				}
+
+			}
+		}
+
+		currentPlayer = 1;
+		int blackScore = tallyScore();
+
+		currentPlayer = 2;
+		int whiteScore = tallyScore();
+
+		if (blackScore > whiteScore) {
+			return "black";
+		} else if (whiteScore > blackScore) {
+			return "white";
+		} else {
+			return "neither player";
+		}
+
+	}
+
+	/**
+	 * determineTerritory is a modified version of markedForCapture that
+	 * recursively checks each space to see if it is surrounded by pieces owned
+	 * by the current player. It changes the marked variable of every space that
+	 * is surrounded by previously checked spaces, walls or pieces of the
+	 * allegiance of the current player to true. If any space in the ArrayList
+	 * chain is unmarked, that means it was connected to a piece of the opposing
+	 * player's color. This means that in the checkCurrentPlayerTerritory
+	 * method, every space will be unmarked and their allegiances will not be
+	 * changed to the territory of the current player
+	 */
+	private boolean determineTerritory(int x, int y,
+			ArrayList<Intersection> chain) {
+		/*
+		 *
+		 */
+
+		if (x < 0 || y < 0 || y >= NUM_LINES || x >= NUM_LINES) {
+			return true;
+		} else if (intersections[x][y].getAllegiance() == currentPlayer) {
+			return true;
+		}
+		if (intersections[x][y].getAllegiance() == opposingPlayer) {
+			return false;
+		}
+		if (chain.contains(intersections[x][y])) {
+			intersections[x][y].setMarked(true);
+			return true;
+		}
+		chain.add(intersections[x][y]);
+		if (determineTerritory(x, y - 1, chain)
+				&& determineTerritory(x - 1, y, chain)
+				&& determineTerritory(x + 1, y, chain)
+				&& determineTerritory(x, y + 1, chain)) {
+			intersections[x][y].setMarked(true);
+			return true;
+		}
+		intersections[x][y].setMarked(false);
+		return false;
+
+	}
+
+	/**
+	 * setColorTerritory is a method that helps determine the winner by changing
+	 * the allegiance of a piece that currently has allegiance 0 to the the
+	 * allegiance of the territory it should be. If the piece is surrounded by
+	 * black pieces, it is allegiance 3. White, allegiance 4, and if it is
+	 * connected to both colors, it is of allegiance 5: neutral.
+	 * setColorTerritory changes the allegiance of every empty space touching
+	 * the space at indices x and y to its appropriate value by using the
+	 * checkCurrentPlayerTerritory method to see if the piece is in the
+	 * territory of the current player. After checking both black and white, if
+	 * the piece was not part of either player's territory, then its allegiance
+	 * is changed to 5 (neutral).
+	 * 
+	 * @param x
+	 *            the x index of the space
+	 * @param y
+	 *            the y index of the space
+	 * @param space
+	 *            the ArrayList storing every space that has been checked and
+	 *            has had its allegiance changed to a number from 3 to 5
+	 */
+	private void setColorTerritory(int x, int y) {
+
+		ArrayList<Intersection> chain = new ArrayList<Intersection>();
+
+		currentPlayer = 1;
+		opposingPlayer = 2;
+		if (!checkCurrentPlayerTerritory(x, y, chain)) {
+
+			chain.clear();
+			currentPlayer = 2;
+			opposingPlayer = 1;
+			if (!checkCurrentPlayerTerritory(x, y, chain)) {
+				/*
+				 * if the intersections were touching both white and black (or
+				 * no color for some reason), the pieces are now guaranteed to
+				 * be neutral
+				 */
+				for (int i = 0; i < chain.size(); i++) {
+					chain.get(i).setAllegiance(5);
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * checkCurrentPlayerTerritory is a boolean that receives the x and y index
+	 * of a space that needs to be checked and an ArrayList chain which is used
+	 * to store every space connected to that space. If currentPlayer is 1
+	 * (black), it will use determineTerritory to check the space and every
+	 * connected space to see if those spaces are black territory. Those pieces
+	 * will be marked by determineTerritory if they are. Then it will check to
+	 * see if any piece is unmarked, because that would mean that every piece is
+	 * not a part of black territory. If so, every piece is unmarked, the
+	 * allegiances are not changed and false is returned. If the pieces are part
+	 * of black territory then true is returned and setColorTerritory will also
+	 * terminate. If every piece is marked, then their allegiances are changed
+	 * to currentPlayer + 2, the corresponding territory allegiance to
+	 * currentPlayer, which is 3 for black.
+	 * 
+	 * If false was returned, setColorTerritory will alter current and opposing
+	 * player such that 2 (white) is the current player and this method will be
+	 * called again. It will do for white, this time, what it did for black,
+	 * returning true if the pieces are white territory and false otherwise.
+	 * 
+	 * Note: currentPlayer is set to 1 when this method is being called to
+	 * determine black territory and 2 when it is being called to determine
+	 * white territory. opposingPlayer is also appropriately changed.
+	 * 
+	 * @param x
+	 *            the x index of the space being checked
+	 * @param y
+	 *            the y index of the space being checked
+	 * @param chain
+	 *            the ArrayList containing every space connected to the one at
+	 *            (x, y)
+	 * @return whether or not the piece is part of the current player's
+	 *         territory
+	 */
+	private boolean checkCurrentPlayerTerritory(int x, int y,
+			ArrayList<Intersection> chain) {
+		determineTerritory(x, y, chain);
+		/*
+		 * everything in chain is now marked if it was touching only pieces of
+		 * currentPlayer's color
+		 */
+		for (int i = 0; i < chain.size(); i++) {
+			if (!chain.get(i).getMarked()) {
+				for (int j = 0; j < chain.size(); j++) {
+					chain.get(j).setMarked(false);
+				}
+				break;
+			}
+		}
+
+		if (chain.get(0).getMarked()) {
+			for (int i = 0; i < chain.size(); i++) {
+				chain.get(i).setAllegiance(currentPlayer + 2);
+				chain.get(i).setMarked(false);
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	
 
 	/*
 	 * JFrame for options ko vs superko handicap, black gets extra moves scoring

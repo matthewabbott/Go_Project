@@ -25,6 +25,7 @@ public class Intersection {
 	 * 2 means there is a white piece on the intersection
 	 * 3 means the intersection is part of black territory but has no piece
 	 * 4 means the intersection is part of white territory but has no piece
+	 * 5 means the intersection is neutral territory and has been checked
 	 */
 	private int allegiance;
 	
