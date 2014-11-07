@@ -30,6 +30,7 @@ import java.applet.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.lang.*;
 
 import acm.graphics.*;
 import acm.program.*;
@@ -119,6 +120,9 @@ public class Go extends GraphicsProgram {
 	 */
 	private int whiteDisadvantageBonus = 0;
 
+	/** The user inputs a previous board number to undo the game to in here */
+	private JTextField undoField;
+
 	public void init() {
 
 		usingKo = (koDialogResponse() == 0);
@@ -129,7 +133,13 @@ public class Go extends GraphicsProgram {
 
 		addMouseListeners();
 
+		add(new JLabel("Previous Board Number:"), NORTH);
+		JTextField undoField = new JTextField(2);
+		undoField.setActionCommand("Undo");
+		add(undoField, NORTH);
+
 		add(new JButton("Undo"), NORTH);
+
 		add(new JButton("Pass"), NORTH);
 		add(new JButton("End Game"), NORTH);
 		addActionListeners();
@@ -276,7 +286,7 @@ public class Go extends GraphicsProgram {
 		if (usingKo) {
 
 			if (breakingKo()) {
-				undo();
+				undo(-1);
 				JOptionPane
 						.showMessageDialog(
 								this,
@@ -286,7 +296,7 @@ public class Go extends GraphicsProgram {
 
 		} else {
 			if (breakingSuperko()) {
-				undo();
+				undo(-1);
 				JOptionPane
 						.showMessageDialog(
 								this,
@@ -339,7 +349,7 @@ public class Go extends GraphicsProgram {
 				pass++;
 				overwritePreviousAllegiances();
 				nextPlayer();
-				
+
 				if (pass >= 2) {
 					endGame();
 				}
@@ -355,7 +365,19 @@ public class Go extends GraphicsProgram {
 		}
 
 		if ("Undo".equals(e.getActionCommand())) {
-			undo();
+			try {
+				int numBoard = Integer.parseInt(undoField.getText());
+				System.out.println(numBoard);
+				if (numBoard > 0 && numBoard <= allPreviousAllegiances.size()) {
+					undo(numBoard);
+				} else {
+					undo(-1);
+				}
+			} catch(NullPointerException playerInputInvalid) {
+				undo(-1);
+			}
+			
+			
 		}
 
 		if ("End Game".equals(e.getActionCommand())) {
@@ -396,18 +418,24 @@ public class Go extends GraphicsProgram {
 	 * is chosen after a pass, it will only change the turn of the current
 	 * player. There is no longer any limit on the number of possible undos
 	 */
-	private void undo() {
+	private void undo(int numBoard) {
 		if (pass > 0) {
 			pass--;
 		}
 
 		if (allPreviousAllegiances.size() > 1) {
+			if (numBoard == -1) {
+				resetBoard();
+				overwriteIntersections(0);
+				restoreBoardState();
+				nextPlayer();
 
-			resetBoard();
-			overwriteIntersections();
-			restoreBoardState();
-			nextPlayer();
-
+			} else {
+				resetBoard();
+				overwriteIntersections(allPreviousAllegiances.size() - numBoard);
+				restoreBoardState();
+				nextPlayer();
+			}
 		}
 
 		gameOver = false;
@@ -458,25 +486,32 @@ public class Go extends GraphicsProgram {
 
 	/**
 	 * overwriteIntersections is a void method that replaces every allegiance
-	 * value in intersections with the corresponding value from index 0 of
-	 * allPreviousAllegiances. Additionally, it removes that particular board
-	 * state from the ArrayList, now that the game board has been reverted to
-	 * that state. It exists to simplify the Undo method, and is called
-	 * immediately after every existing piece is removed from the board with
-	 * resetBoard.
+	 * value in intersections with the corresponding value from index boardIndex
+	 * of allPreviousAllegiances. Additionally, it removes that particular board
+	 * state from the ArrayList and every board state that came after it, since
+	 * the game board has been reverted to that state. It exists to simplify the
+	 * Undo method, and is called immediately after every existing piece is
+	 * removed from the board with resetBoard.
+	 * 
+	 * @param boardIndex
+	 *            the index of the board the player has chosen to revert to when
+	 *            the press the undo button. It is 0 if they are reverting the
+	 *            last move
 	 */
-	private void overwriteIntersections() {
+	private void overwriteIntersections(int boardIndex) {
 
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
 
-				intersections[i][j]
-						.setAllegiance(allPreviousAllegiances.get(0)[i][j]);
+				intersections[i][j].setAllegiance(allPreviousAllegiances
+						.get(boardIndex)[i][j]);
 
 			}
 		}
 
-		allPreviousAllegiances.remove(0);
+		for (int i = 0; i < boardIndex; i++) {
+			allPreviousAllegiances.remove(0);
+		}
 	}
 
 	/**
@@ -986,9 +1021,9 @@ public class Go extends GraphicsProgram {
 	 * 
 	 * Display the color of the current player somewhere
 	 * 
-	 * JFrame for options ko vs superko, handicap, black gets extra moves scoring
-	 * handicap, white gets + x.5 points at the end, where x is input by the
-	 * players board size, defaulting to 19x19
+	 * JFrame for options ko vs superko, handicap, black gets extra moves
+	 * scoring handicap, white gets + x.5 points at the end, where x is input by
+	 * the players board size, defaulting to 19x19
 	 * 
 	 * Label 1-19, a-s, must accommodate less than 19x19 board sizes with this
 	 * addition
