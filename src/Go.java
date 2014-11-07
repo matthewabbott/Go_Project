@@ -337,14 +337,12 @@ public class Go extends GraphicsProgram {
 			if (allPreviousAllegiances.size() > 1) {
 
 				pass++;
-				if (pass >= 2) {
-
-					endGame();
-
-				}
-
 				overwritePreviousAllegiances();
 				nextPlayer();
+				
+				if (pass >= 2) {
+					endGame();
+				}
 
 			} else {
 				JOptionPane
@@ -981,21 +979,6 @@ public class Go extends GraphicsProgram {
 
 		return totalCurrentPlayerScore;
 	}
-
-	/*
-	 * STRANGE BUGS ARE AFOOT
-	 * 
-	 * Right now, if I pass twice to end the game, then undo to continue, every
-	 * piece of the player whose color it was when the game ended is removed
-	 * once the next player places a piece. However, previous board states don't
-	 * seem to be overwritten, as pressing undo twice will return the board to
-	 * the state it was before the first player passed (that is, undo is
-	 * functioning correctly). If undo is pressed once after the piece causing
-	 * the disappearing is placed, then the disappearing will be undone as is
-	 * correct, but trying to place another piece will result in the same bug.
-	 * 
-	 * I have no idea what is going on here, but I will figure it out somehow.
-	 */
 
 	/*
 	 * Option to enter the number of a previous board state to revert to. Option
