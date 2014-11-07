@@ -331,15 +331,29 @@ public class Go extends GraphicsProgram {
 	 * concede and still have the score totaled.
 	 */
 	public void actionPerformed(ActionEvent e) {
+		
 		if ("Pass".equals(e.getActionCommand())) {
+			
+			if (allPreviousAllegiances.size() > 1) {
 
-			pass++;
-			if (pass >= 2) {
-				endGame();
+				pass++;
+				if (pass >= 2) {
+
+					endGame();
+
+				}
+
+				overwritePreviousAllegiances();
+				nextPlayer();
+
+			} else {
+				JOptionPane
+						.showMessageDialog(
+								this,
+								"Your pass has been undone, surely you can think of a better move.",
+								"I'm assuming that was a mistake.",
+								JOptionPane.PLAIN_MESSAGE);
 			}
-
-			overwritePreviousAllegiances();
-			nextPlayer();
 		}
 
 		if ("Undo".equals(e.getActionCommand())) {
@@ -347,7 +361,16 @@ public class Go extends GraphicsProgram {
 		}
 
 		if ("End Game".equals(e.getActionCommand())) {
-			endGame();
+			
+			if (allPreviousAllegiances.size() > 2) {
+				endGame();
+				
+			} else {
+				
+				JOptionPane.showMessageDialog(this,
+						"Are you honestly going to end the game like this?",
+						"What a strange decision.", JOptionPane.PLAIN_MESSAGE);
+			}
 		}
 	}
 
@@ -376,6 +399,9 @@ public class Go extends GraphicsProgram {
 	 * player. There is no longer any limit on the number of possible undos
 	 */
 	private void undo() {
+		if (pass > 0) {
+			pass--;
+		}
 
 		if (allPreviousAllegiances.size() > 1) {
 
@@ -955,6 +981,21 @@ public class Go extends GraphicsProgram {
 
 		return totalCurrentPlayerScore;
 	}
+
+	/*
+	 * STRANGE BUGS ARE AFOOT
+	 * 
+	 * Right now, if I pass twice to end the game, then undo to continue, every
+	 * piece of the player whose color it was when the game ended is removed
+	 * once the next player places a piece. However, previous board states don't
+	 * seem to be overwritten, as pressing undo twice will return the board to
+	 * the state it was before the first player passed (that is, undo is
+	 * functioning correctly). If undo is pressed once after the piece causing
+	 * the disappearing is placed, then the disappearing will be undone as is
+	 * correct, but trying to place another piece will result in the same bug.
+	 * 
+	 * I have no idea what is going on here, but I will figure it out somehow.
+	 */
 
 	/*
 	 * JFrame for options ko vs superko handicap, black gets extra moves scoring
