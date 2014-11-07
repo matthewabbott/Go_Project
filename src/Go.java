@@ -331,9 +331,9 @@ public class Go extends GraphicsProgram {
 	 * concede and still have the score totaled.
 	 */
 	public void actionPerformed(ActionEvent e) {
-		
+
 		if ("Pass".equals(e.getActionCommand())) {
-			
+
 			if (allPreviousAllegiances.size() > 1) {
 
 				pass++;
@@ -361,12 +361,12 @@ public class Go extends GraphicsProgram {
 		}
 
 		if ("End Game".equals(e.getActionCommand())) {
-			
+
 			if (allPreviousAllegiances.size() > 2) {
 				endGame();
-				
+
 			} else {
-				
+
 				JOptionPane.showMessageDialog(this,
 						"Are you honestly going to end the game like this?",
 						"What a strange decision.", JOptionPane.PLAIN_MESSAGE);
@@ -998,11 +998,16 @@ public class Go extends GraphicsProgram {
 	 */
 
 	/*
-	 * JFrame for options ko vs superko handicap, black gets extra moves scoring
+	 * Option to enter the number of a previous board state to revert to. Option
+	 * to view a previous board state without having to revert to it.
+	 * 
+	 * Display the color of the current player somewhere
+	 * 
+	 * JFrame for options ko vs superko, handicap, black gets extra moves scoring
 	 * handicap, white gets + x.5 points at the end, where x is input by the
 	 * players board size, defaulting to 19x19
 	 * 
-	 * Possible additions label 1-19, a-s, accommodate less than 19x19 board
-	 * sizes with this addition
+	 * Label 1-19, a-s, must accommodate less than 19x19 board sizes with this
+	 * addition
 	 */
 }
