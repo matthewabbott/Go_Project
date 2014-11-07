@@ -113,6 +113,12 @@ public class Go extends GraphicsProgram {
 	/** If the game is over, gameOver is true */
 	private boolean gameOver = false;
 
+	/**
+	 * Someday in the future, the white player will receive extra points at the
+	 * end of the game based on options chosen by the players at the beginning.
+	 */
+	private int whiteDisadvantageBonus = 0;
+
 	public void init() {
 
 		usingKo = (koDialogResponse() == 0);
@@ -755,9 +761,11 @@ public class Go extends GraphicsProgram {
 
 		currentPlayer = 1;
 		int blackScore = tallyScore();
+		System.out.println("Black has " + blackScore + " points.");
 
 		currentPlayer = 2;
 		int whiteScore = tallyScore();
+		System.out.println("White has " + whiteScore + " points.");
 
 		if (blackScore > whiteScore) {
 			return "black";
@@ -914,6 +922,23 @@ public class Go extends GraphicsProgram {
 
 	}
 
+	private int tallyScore() {
+
+		int totalCurrentPlayerScore = whiteDisadvantageBonus;
+
+		for (int i = 0; i < NUM_LINES; i++) {
+			for (int j = 0; j < NUM_LINES; j++) {
+
+				if (intersections[i][j].getAllegiance() == currentPlayer
+						|| intersections[i][j].getAllegiance() == currentPlayer + 2) {
+					totalCurrentPlayerScore++;
+				}
+
+			}
+		}
+
+		return totalCurrentPlayerScore;
+	}
 	/*
 	 * JFrame for options ko vs superko handicap, black gets extra moves scoring
 	 * handicap, white gets + x.5 points at the end, where x is input by the
