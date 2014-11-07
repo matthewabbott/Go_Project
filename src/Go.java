@@ -922,15 +922,31 @@ public class Go extends GraphicsProgram {
 
 	}
 
+	/**
+	 * tallyScore is an integer method that returns the total score of the
+	 * current player. It does so by checking every intersection and
+	 * incrementing the variable totalCurrentPlayerScore by 1 for every
+	 * intersection that is of the allegiance or corresponding territory
+	 * allegiance of the current player. That is, if the current player is 1
+	 * (black), then any space/piece with allegiance 1 or 3 increases black's
+	 * score by 1. Additionally, if there is a bonus for white for going second,
+	 * white's total score will also increase.
+	 * 
+	 * @return currentPlayer's total score
+	 */
 	private int tallyScore() {
 
-		int totalCurrentPlayerScore = whiteDisadvantageBonus;
+		int totalCurrentPlayerScore = 0;
+		if (currentPlayer == 2) {
+			totalCurrentPlayerScore = whiteDisadvantageBonus;
+		}
 
 		for (int i = 0; i < NUM_LINES; i++) {
 			for (int j = 0; j < NUM_LINES; j++) {
 
 				if (intersections[i][j].getAllegiance() == currentPlayer
 						|| intersections[i][j].getAllegiance() == currentPlayer + 2) {
+
 					totalCurrentPlayerScore++;
 				}
 
@@ -939,6 +955,7 @@ public class Go extends GraphicsProgram {
 
 		return totalCurrentPlayerScore;
 	}
+
 	/*
 	 * JFrame for options ko vs superko handicap, black gets extra moves scoring
 	 * handicap, white gets + x.5 points at the end, where x is input by the
