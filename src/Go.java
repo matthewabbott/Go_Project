@@ -40,6 +40,9 @@ import javax.swing.*;
 
 public class Go extends GraphicsProgram {
 
+	/** the extra vertical space above the board, in pixels */
+	public static final int EXTRA_HEIGHT = 50;
+
 	/**
 	 * Width and height of application window in pixels. Note: this is how large
 	 * the application window should be. However, these parameters must be
@@ -48,7 +51,7 @@ public class Go extends GraphicsProgram {
 	 * such that the width and height of the window reflects these values
 	 */
 	public static final int APPLICATION_WIDTH = 800;
-	public static final int APPLICATION_HEIGHT = 800;
+	public static final int APPLICATION_HEIGHT = 800 + EXTRA_HEIGHT;
 
 	/**
 	 * Number of vertical and horizontal lines that comprise the game board.
@@ -65,7 +68,7 @@ public class Go extends GraphicsProgram {
 	 * adjacent intersections, in pixels.
 	 */
 	public static final int VERT_LINE_SEP = APPLICATION_WIDTH / (NUM_LINES + 1);
-	public static final int HORIZ_LINE_SEP = APPLICATION_HEIGHT
+	public static final int HORIZ_LINE_SEP = (APPLICATION_HEIGHT - EXTRA_HEIGHT)
 			/ (NUM_LINES + 1);
 
 	/**
@@ -123,6 +126,12 @@ public class Go extends GraphicsProgram {
 	/** The user inputs a previous board number to undo the game to in here */
 	private JTextField undoField;
 
+	/** the current turn number of the game */
+	private int currentTurn = 1;
+
+	private GLabel turnLabel;
+	private GOval currentPlayerPiece;
+
 	public void init() {
 
 		usingKo = (koDialogResponse() == 0);
@@ -130,18 +139,12 @@ public class Go extends GraphicsProgram {
 		createBoard();
 		initializeIntersections();
 		overwritePreviousAllegiances();
+		addTurnInformation();
 
 		addMouseListeners();
 
-		add(new JLabel("How many turns back do you want to go?:"), NORTH);
-		JTextField undoField = new JTextField(2);
-		undoField.setActionCommand("Undo");
-		add(undoField, NORTH);
+		addJComponents();
 
-		add(new JButton("Undo"), NORTH);
-
-		add(new JButton("Pass"), NORTH);
-		add(new JButton("End Game"), NORTH);
 		addActionListeners();
 
 	}
@@ -185,16 +188,18 @@ public class Go extends GraphicsProgram {
 	/**
 	 * createBoard is a simple method that draws all the lines that comprise the
 	 * Go game board. It determines the locations of the lines based on the
-	 * constants that define how many lines there are and how large the
-	 * application window should be
+	 * constants that define how many lines there are, how large the application
+	 * window should be, and how much space there is above the board
 	 */
 	private void createBoard() {
 		for (int i = 1; i < NUM_LINES + 1; i++) {
-			GLine vertLine = new GLine(VERT_LINE_SEP * i, HORIZ_LINE_SEP,
-					VERT_LINE_SEP * i, APPLICATION_HEIGHT - HORIZ_LINE_SEP);
+			GLine vertLine = new GLine(VERT_LINE_SEP * i, HORIZ_LINE_SEP
+					+ EXTRA_HEIGHT, VERT_LINE_SEP * i, APPLICATION_HEIGHT
+					- HORIZ_LINE_SEP);
 
-			GLine horizLine = new GLine(VERT_LINE_SEP, HORIZ_LINE_SEP * i,
-					APPLICATION_WIDTH - VERT_LINE_SEP, HORIZ_LINE_SEP * i);
+			GLine horizLine = new GLine(VERT_LINE_SEP, EXTRA_HEIGHT
+					+ HORIZ_LINE_SEP * i, APPLICATION_WIDTH - VERT_LINE_SEP,
+					EXTRA_HEIGHT + HORIZ_LINE_SEP * i);
 
 			horizLine.setColor(Color.BLACK);
 			vertLine.setColor(Color.BLACK);
@@ -221,10 +226,53 @@ public class Go extends GraphicsProgram {
 			for (int j = 0; j < NUM_LINES; j++) {
 
 				intersections[i][j] = new Intersection(VERT_LINE_SEP * (i + 1),
-						HORIZ_LINE_SEP * (j + 1), PIECE_DIAMETER);
+						EXTRA_HEIGHT + HORIZ_LINE_SEP * (j + 1), PIECE_DIAMETER);
 			}
 
 		}
+	}
+
+	/**
+	 * addTurnInformation is a void method that adds a GLabel that says
+	 * "Current player:", as well as a separate GLabel that has the current turn
+	 * number on it. It also adds a GOval that is the size of a normal piece
+	 * with that is the color of the black player. This piece is changed by the
+	 * displayTurnInformation method, along with the turn count GLabel, which is
+	 * called after any player makes a move.
+	 */
+	private void addTurnInformation() {
+		GLabel currentPlayerLabel = new GLabel("Current Player:", 0,
+				EXTRA_HEIGHT);
+		currentPlayerLabel.setColor(Color.BLACK);
+		currentPlayerLabel.setFont("Plain-*-18");
+		add(currentPlayerLabel);
+
+		currentPlayerPiece = new GOval(currentPlayerLabel.getWidth()
+				+ PIECE_DIAMETER / 2, EXTRA_HEIGHT - PIECE_DIAMETER / 2 - currentPlayerLabel.getAscent() / 2,
+				PIECE_DIAMETER, PIECE_DIAMETER);
+		currentPlayerPiece.setFilled(true);
+		add(currentPlayerPiece);
+
+		turnLabel = new GLabel("Current Turn: 1", 0, EXTRA_HEIGHT / 2);
+		add(turnLabel);
+
+	}
+
+	/**
+	 * addJComponents is a void method that add ass of the salient javax
+	 * components to the game. It exists to make the init method easier to read
+	 */
+	private void addJComponents() {
+		add(new JLabel("How many turns back do you want to go?:"), NORTH);
+		undoField = new JTextField(2);
+		undoField.setActionCommand("Undo");
+		add(undoField, NORTH);
+		undoField.setText("1");
+
+		add(new JButton("Undo"), NORTH);
+
+		add(new JButton("Pass"), NORTH);
+		add(new JButton("End Game"), NORTH);
 	}
 
 	/**
@@ -262,6 +310,7 @@ public class Go extends GraphicsProgram {
 							pass = 0;
 							capturePieces(i, j);
 							nextPlayer();
+							displayTurnInformation();
 							checkNeighbors(i, j);
 
 						}
@@ -349,6 +398,7 @@ public class Go extends GraphicsProgram {
 				pass++;
 				overwritePreviousAllegiances();
 				nextPlayer();
+				displayTurnInformation();
 
 				if (pass >= 2) {
 					endGame();
@@ -367,13 +417,14 @@ public class Go extends GraphicsProgram {
 		if ("Undo".equals(e.getActionCommand())) {
 			try {
 				int numTurns = Integer.parseInt(undoField.getText());
-				System.out.println(numTurns);
+
 				if (numTurns > 0 && numTurns <= allPreviousAllegiances.size()) {
 					undo(numTurns);
 				} else {
 					undo(1);
 				}
 			} catch (NullPointerException playerInputInvalid) {
+				System.out.println("Player input was invalid");
 				undo(1);
 			}
 
@@ -395,9 +446,9 @@ public class Go extends GraphicsProgram {
 
 	/**
 	 * nextPlayer is a void method that changes the current player to the other
-	 * player and resets the undo counter, which prevents undo from being called
-	 * multiple times in a row. It is called in response to a piece being placed
-	 * or to a turn being passed.
+	 * player and vice versa. It is called in response to a piece being placed
+	 * or to a turn being passed. It also calls the displayCurrentPlayerMethod,
+	 * which shows whose turn it is at any given time.
 	 */
 	private void nextPlayer() {
 
@@ -410,6 +461,11 @@ public class Go extends GraphicsProgram {
 		if (opposingPlayer > 2) {
 			opposingPlayer = 1;
 		}
+
+	}
+
+	private void displayTurnInformation() {
+		currentTurn++;
 	}
 
 	/**
@@ -423,18 +479,17 @@ public class Go extends GraphicsProgram {
 		}
 
 		if (allPreviousAllegiances.size() > 1) {
-			if (numTurns == -1) {
-				resetBoard();
-				overwriteIntersections(0);
-				restoreBoardState();
-				nextPlayer();
 
-			} else {
-				resetBoard();
-				overwriteIntersections(numTurns - 1);
-				restoreBoardState();
+			resetBoard();
+			overwriteIntersections(numTurns - 1);
+			restoreBoardState();
+
+			currentTurn -= numTurns;
+			for (int i = 0; i < numTurns; i++) {
 				nextPlayer();
 			}
+			displayTurnInformation();
+
 		}
 
 		gameOver = false;
@@ -509,7 +564,7 @@ public class Go extends GraphicsProgram {
 			}
 		}
 
-		for (int i = 0; i < boardIndex; i++) {
+		for (int i = 0; i <= boardIndex; i++) {
 			allPreviousAllegiances.remove(0);
 		}
 	}
@@ -1018,7 +1073,6 @@ public class Go extends GraphicsProgram {
 	/*
 	 * Display: current turn number and current player color using Glabels and a
 	 * circle Undo a certain number of terms.
-	 * 
 	 * 
 	 * Option to enter the number of a previous board state to revert to. Option
 	 * to view a previous board state without having to revert to it.
