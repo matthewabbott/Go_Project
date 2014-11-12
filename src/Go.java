@@ -248,12 +248,14 @@ public class Go extends GraphicsProgram {
 		add(currentPlayerLabel);
 
 		currentPlayerPiece = new GOval(currentPlayerLabel.getWidth()
-				+ PIECE_DIAMETER / 2, EXTRA_HEIGHT - PIECE_DIAMETER / 2 - currentPlayerLabel.getAscent() / 2,
+				+ PIECE_DIAMETER / 2, EXTRA_HEIGHT - PIECE_DIAMETER / 3 - currentPlayerLabel.getAscent() / 2,
 				PIECE_DIAMETER, PIECE_DIAMETER);
 		currentPlayerPiece.setFilled(true);
 		add(currentPlayerPiece);
 
 		turnLabel = new GLabel("Current Turn: 1", 0, EXTRA_HEIGHT / 2);
+		turnLabel.setColor(Color.BLACK);
+		turnLabel.setFont("Plain-*-18");
 		add(turnLabel);
 
 	}
@@ -466,6 +468,18 @@ public class Go extends GraphicsProgram {
 
 	private void displayTurnInformation() {
 		currentTurn++;
+		if (currentTurn % 2 == 0) {
+			currentPlayerPiece.setFilled(false);
+		} else {
+			currentPlayerPiece.setFilled(true);
+		}
+		
+		remove(turnLabel);
+		turnLabel = new GLabel("Current Turn: " + currentTurn, 0, EXTRA_HEIGHT / 2);
+		turnLabel.setColor(Color.BLACK);
+		turnLabel.setFont("Plain-*-18");
+		add(turnLabel);
+		
 	}
 
 	/**
@@ -484,7 +498,7 @@ public class Go extends GraphicsProgram {
 			overwriteIntersections(numTurns - 1);
 			restoreBoardState();
 
-			currentTurn -= numTurns;
+			currentTurn -= numTurns + 1;
 			for (int i = 0; i < numTurns; i++) {
 				nextPlayer();
 			}
