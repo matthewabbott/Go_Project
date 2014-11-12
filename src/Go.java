@@ -133,7 +133,7 @@ public class Go extends GraphicsProgram {
 
 		addMouseListeners();
 
-		add(new JLabel("Previous Board Number:"), NORTH);
+		add(new JLabel("How many turns back do you want to go?:"), NORTH);
 		JTextField undoField = new JTextField(2);
 		undoField.setActionCommand("Undo");
 		add(undoField, NORTH);
@@ -366,18 +366,17 @@ public class Go extends GraphicsProgram {
 
 		if ("Undo".equals(e.getActionCommand())) {
 			try {
-				int numBoard = Integer.parseInt(undoField.getText());
-				System.out.println(numBoard);
-				if (numBoard > 0 && numBoard <= allPreviousAllegiances.size()) {
-					undo(numBoard);
+				int numTurns = Integer.parseInt(undoField.getText());
+				System.out.println(numTurns);
+				if (numTurns > 0 && numTurns <= allPreviousAllegiances.size()) {
+					undo(numTurns);
 				} else {
-					undo(-1);
+					undo(1);
 				}
-			} catch(NullPointerException playerInputInvalid) {
-				undo(-1);
+			} catch (NullPointerException playerInputInvalid) {
+				undo(1);
 			}
-			
-			
+
 		}
 
 		if ("End Game".equals(e.getActionCommand())) {
@@ -418,13 +417,13 @@ public class Go extends GraphicsProgram {
 	 * is chosen after a pass, it will only change the turn of the current
 	 * player. There is no longer any limit on the number of possible undos
 	 */
-	private void undo(int numBoard) {
+	private void undo(int numTurns) {
 		if (pass > 0) {
 			pass--;
 		}
 
 		if (allPreviousAllegiances.size() > 1) {
-			if (numBoard == -1) {
+			if (numTurns == -1) {
 				resetBoard();
 				overwriteIntersections(0);
 				restoreBoardState();
@@ -432,7 +431,7 @@ public class Go extends GraphicsProgram {
 
 			} else {
 				resetBoard();
-				overwriteIntersections(allPreviousAllegiances.size() - numBoard);
+				overwriteIntersections(numTurns - 1);
 				restoreBoardState();
 				nextPlayer();
 			}
@@ -486,12 +485,13 @@ public class Go extends GraphicsProgram {
 
 	/**
 	 * overwriteIntersections is a void method that replaces every allegiance
-	 * value in intersections with the corresponding value from index boardIndex
-	 * of allPreviousAllegiances. Additionally, it removes that particular board
-	 * state from the ArrayList and every board state that came after it, since
-	 * the game board has been reverted to that state. It exists to simplify the
-	 * Undo method, and is called immediately after every existing piece is
-	 * removed from the board with resetBoard.
+	 * value in intersections with the corresponding value from the board at
+	 * index boardIndex of allPreviousAllegiances. Additionally, it removes that
+	 * particular board state from the ArrayList and every board state that came
+	 * after it (ie earlier indices), since the game board has been reverted to
+	 * that state. It exists to simplify the Undo method, and is called
+	 * immediately after every existing piece is removed from the board with
+	 * resetBoard.
 	 * 
 	 * @param boardIndex
 	 *            the index of the board the player has chosen to revert to when
@@ -1016,6 +1016,10 @@ public class Go extends GraphicsProgram {
 	}
 
 	/*
+	 * Display: current turn number and current player color using Glabels and a
+	 * circle Undo a certain number of terms.
+	 * 
+	 * 
 	 * Option to enter the number of a previous board state to revert to. Option
 	 * to view a previous board state without having to revert to it.
 	 * 
