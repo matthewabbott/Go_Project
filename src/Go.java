@@ -41,7 +41,7 @@ import javax.swing.*;
 public class Go extends GraphicsProgram {
 
 	/** the extra vertical space above the board, in pixels */
-	public static final int EXTRA_HEIGHT = 50;
+	private static final int EXTRA_HEIGHT = 50;
 
 	/**
 	 * Width and height of application window in pixels. Note: this is how large
@@ -55,21 +55,20 @@ public class Go extends GraphicsProgram {
 
 	/**
 	 * Number of vertical and horizontal lines that comprise the game board.
-	 * Note: the board is always a square and will have NUM_LINES^2
+	 * Note: the board is always a square and will have numLines^2
 	 * intersections. For a proper game of Go, there should be 19 lines. The
 	 * existence of this constant also accommodates other board setups, such as
 	 * the common beginner 9x9 board.
 	 */
-	public static final int NUM_LINES = 19;
+	private int numLines;
 
 	/**
 	 * These values represent the separation between each line, vertically and
 	 * horizontally, respectively. They also represent the distance between
 	 * adjacent intersections, in pixels.
 	 */
-	public static final int VERT_LINE_SEP = APPLICATION_WIDTH / (NUM_LINES + 1);
-	public static final int HORIZ_LINE_SEP = (APPLICATION_HEIGHT - EXTRA_HEIGHT)
-			/ (NUM_LINES + 1);
+	private int vertLineSep;
+	private int horizLineSep;
 
 	/**
 	 * Width of one game piece. Uses vertical line separation to determine size,
@@ -80,7 +79,7 @@ public class Go extends GraphicsProgram {
 	 * for this because it is simpler and because it maintains said circular
 	 * shape of pieces even under strange window conditions.
 	 */
-	public static final double PIECE_DIAMETER = VERT_LINE_SEP / 2;
+	private double pieceDiameter;
 
 	/** This integer represents the player whose turn it currently is */
 	private int currentPlayer = 1;
@@ -165,6 +164,15 @@ public class Go extends GraphicsProgram {
 	private void assignAllOptions(GoOptionMenu menu) {
 		usingKo = menu.getUsingKo();
 		whiteDisadvantageBonus = menu.getWhiteDisadvantageBonus();
+		initializeBoardProperties(menu);
+	}
+
+	private void initializeBoardProperties(GoOptionMenu menu) {
+		numLines = menu.getBoardSize();
+		vertLineSep = APPLICATION_WIDTH / (numLines + 1);
+		horizLineSep = (APPLICATION_HEIGHT - EXTRA_HEIGHT) / (numLines + 1);
+		pieceDiameter = vertLineSep / 2;
+		
 	}
 
 	/**
@@ -210,14 +218,14 @@ public class Go extends GraphicsProgram {
 	 * window should be, and how much space there is above the board
 	 */
 	private void createBoard() {
-		for (int i = 1; i < NUM_LINES + 1; i++) {
-			GLine vertLine = new GLine(VERT_LINE_SEP * i, HORIZ_LINE_SEP
-					+ EXTRA_HEIGHT, VERT_LINE_SEP * i, APPLICATION_HEIGHT
-					- HORIZ_LINE_SEP);
+		for (int i = 1; i < numLines + 1; i++) {
+			GLine vertLine = new GLine(vertLineSep * i, horizLineSep
+					+ EXTRA_HEIGHT, vertLineSep * i, APPLICATION_HEIGHT
+					- horizLineSep);
 
-			GLine horizLine = new GLine(VERT_LINE_SEP, EXTRA_HEIGHT
-					+ HORIZ_LINE_SEP * i, APPLICATION_WIDTH - VERT_LINE_SEP,
-					EXTRA_HEIGHT + HORIZ_LINE_SEP * i);
+			GLine horizLine = new GLine(vertLineSep, EXTRA_HEIGHT
+					+ horizLineSep * i, APPLICATION_WIDTH - vertLineSep,
+					EXTRA_HEIGHT + horizLineSep * i);
 
 			horizLine.setColor(Color.BLACK);
 			vertLine.setColor(Color.BLACK);
@@ -230,7 +238,7 @@ public class Go extends GraphicsProgram {
 	/**
 	 * initializeIntersections is a private method that creates all of the
 	 * intersections and stores each of them in the appropriate index of a
-	 * NUM_LINES x NUM_LINES array. The x locations and y locations of each
+	 * numLines x numLines array. The x locations and y locations of each
 	 * intersection are determined by using the separation between vertical
 	 * lines and horizontal lines as well as i and j, respectively. The for
 	 * loops store each new intersection in the array. The indices of each
@@ -239,12 +247,12 @@ public class Go extends GraphicsProgram {
 	 * intersection directly below it
 	 */
 	private void initializeIntersections() {
-		intersections = new Intersection[NUM_LINES][NUM_LINES];
-		for (int i = 0; i < NUM_LINES; i++) {
-			for (int j = 0; j < NUM_LINES; j++) {
+		intersections = new Intersection[numLines][numLines];
+		for (int i = 0; i < numLines; i++) {
+			for (int j = 0; j < numLines; j++) {
 
-				intersections[i][j] = new Intersection(VERT_LINE_SEP * (i + 1),
-						EXTRA_HEIGHT + HORIZ_LINE_SEP * (j + 1), PIECE_DIAMETER);
+				intersections[i][j] = new Intersection(vertLineSep * (i + 1),
+						EXTRA_HEIGHT + horizLineSep * (j + 1), pieceDiameter);
 			}
 
 		}
@@ -266,9 +274,9 @@ public class Go extends GraphicsProgram {
 		add(currentPlayerLabel);
 
 		currentPlayerPiece = new GOval(currentPlayerLabel.getWidth()
-				+ PIECE_DIAMETER / 2, EXTRA_HEIGHT - PIECE_DIAMETER / 3
-				- currentPlayerLabel.getAscent() / 2, PIECE_DIAMETER,
-				PIECE_DIAMETER);
+				+ pieceDiameter / 2, EXTRA_HEIGHT - pieceDiameter / 3
+				- currentPlayerLabel.getAscent() / 2, pieceDiameter,
+				pieceDiameter);
 		currentPlayerPiece.setFilled(true);
 		add(currentPlayerPiece);
 
@@ -314,8 +322,8 @@ public class Go extends GraphicsProgram {
 	private void playerMoved(MouseEvent e) {
 		if (!gameOver) {
 
-			for (int i = 0; i < NUM_LINES; i++) {
-				for (int j = 0; j < NUM_LINES; j++) {
+			for (int i = 0; i < numLines; i++) {
+				for (int j = 0; j < numLines; j++) {
 
 					if (intersectionClicked(intersections[i][j].getX(),
 							intersections[i][j].getY(), e.getX(), e.getY())) {
@@ -400,7 +408,7 @@ public class Go extends GraphicsProgram {
 	 */
 	private boolean intersectionClicked(double x1, double y1, double x2,
 			double y2) {
-		return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)) <= PIECE_DIAMETER / 2;
+		return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)) <= pieceDiameter / 2;
 	}
 
 	/**
@@ -551,8 +559,8 @@ public class Go extends GraphicsProgram {
 	 * method.
 	 */
 	private void resetBoard() {
-		for (int i = 0; i < NUM_LINES; i++) {
-			for (int j = 0; j < NUM_LINES; j++) {
+		for (int i = 0; i < numLines; i++) {
+			for (int j = 0; j < numLines; j++) {
 
 				if (intersections[i][j].getAllegiance() == 1
 						|| intersections[i][j].getAllegiance() == 2) {
@@ -573,8 +581,8 @@ public class Go extends GraphicsProgram {
 	 * overwriteIntersections
 	 */
 	private void restoreBoardState() {
-		for (int i = 0; i < NUM_LINES; i++) {
-			for (int j = 0; j < NUM_LINES; j++) {
+		for (int i = 0; i < numLines; i++) {
+			for (int j = 0; j < numLines; j++) {
 
 				if (intersections[i][j].getAllegiance() == 1
 						|| intersections[i][j].getAllegiance() == 2) {
@@ -604,8 +612,8 @@ public class Go extends GraphicsProgram {
 	 */
 	private void overwriteIntersections(int boardIndex) {
 
-		for (int i = 0; i < NUM_LINES; i++) {
-			for (int j = 0; j < NUM_LINES; j++) {
+		for (int i = 0; i < numLines; i++) {
+			for (int j = 0; j < numLines; j++) {
 
 				intersections[i][j].setAllegiance(allPreviousAllegiances
 						.get(boardIndex)[i][j]);
@@ -627,10 +635,10 @@ public class Go extends GraphicsProgram {
 	 */
 	private void overwritePreviousAllegiances() {
 
-		int[][] previousAllegiances = new int[NUM_LINES][NUM_LINES];
+		int[][] previousAllegiances = new int[numLines][numLines];
 
-		for (int i = 0; i < NUM_LINES; i++) {
-			for (int j = 0; j < NUM_LINES; j++) {
+		for (int i = 0; i < numLines; i++) {
+			for (int j = 0; j < numLines; j++) {
 
 				previousAllegiances[i][j] = intersections[i][j].getAllegiance();
 
@@ -659,8 +667,8 @@ public class Go extends GraphicsProgram {
 			return false;
 		}
 
-		for (int i = 0; i < NUM_LINES; i++) {
-			for (int j = 0; j < NUM_LINES; j++) {
+		for (int i = 0; i < numLines; i++) {
+			for (int j = 0; j < numLines; j++) {
 
 				if (intersections[i][j].getAllegiance() != allPreviousAllegiances
 						.get(1)[i][j]) {
@@ -688,8 +696,8 @@ public class Go extends GraphicsProgram {
 		for (int i = 0; i < allPreviousAllegiances.size(); i++) {
 			boolean arraysSame = true;
 
-			for (int j = 0; j < NUM_LINES; j++) {
-				for (int k = 0; k < NUM_LINES; k++) {
+			for (int j = 0; j < numLines; j++) {
+				for (int k = 0; k < numLines; k++) {
 
 					if (intersections[j][k].getAllegiance() != allPreviousAllegiances
 							.get(i)[j][k]) {
@@ -762,7 +770,7 @@ public class Go extends GraphicsProgram {
 	 */
 	private void checkNeighbors(int x, int y) {
 
-		if (y >= 0 && y < NUM_LINES && x >= 0 && x < NUM_LINES) {
+		if (y >= 0 && y < numLines && x >= 0 && x < numLines) {
 
 			if (intersections[x][y].getAllegiance() == opposingPlayer) {
 
@@ -829,7 +837,7 @@ public class Go extends GraphicsProgram {
 		 * as appropriate
 		 */
 
-		if (x < 0 || y < 0 || y >= NUM_LINES || x >= NUM_LINES) {
+		if (x < 0 || y < 0 || y >= numLines || x >= numLines) {
 			return true;
 
 		} else if (intersections[x][y].getAllegiance() == currentPlayer) {
@@ -912,8 +920,8 @@ public class Go extends GraphicsProgram {
 	 */
 	private String determineWinner() {
 
-		for (int i = 0; i < NUM_LINES; i++) {
-			for (int j = 0; j < NUM_LINES; j++) {
+		for (int i = 0; i < numLines; i++) {
+			for (int j = 0; j < numLines; j++) {
 
 				if (intersections[i][j].getAllegiance() == 0) {
 					setColorTerritory(i, j);
@@ -1062,7 +1070,7 @@ public class Go extends GraphicsProgram {
 	private boolean determineTerritory(int x, int y,
 			ArrayList<Intersection> chain) {
 
-		if (x < 0 || y < 0 || y >= NUM_LINES || x >= NUM_LINES) {
+		if (x < 0 || y < 0 || y >= numLines || x >= numLines) {
 			return true;
 		} else if (intersections[x][y].getAllegiance() == currentPlayer) {
 			return true;
@@ -1106,8 +1114,8 @@ public class Go extends GraphicsProgram {
 			totalCurrentPlayerScore = whiteDisadvantageBonus;
 		}
 
-		for (int i = 0; i < NUM_LINES; i++) {
-			for (int j = 0; j < NUM_LINES; j++) {
+		for (int i = 0; i < numLines; i++) {
+			for (int j = 0; j < numLines; j++) {
 
 				if (intersections[i][j].getAllegiance() == currentPlayer
 						|| intersections[i][j].getAllegiance() == currentPlayer + 2) {
