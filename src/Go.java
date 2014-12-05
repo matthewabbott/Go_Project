@@ -118,10 +118,17 @@ public class Go extends GraphicsProgram {
 	private boolean gameOver = false;
 
 	/**
-	 * Someday in the future, the white player will receive extra points at the
-	 * end of the game based on options chosen by the players at the beginning.
+	 * The white player recieves extra points at the end of the game based on
+	 * options chosen by the players at the beginning.
 	 */
 	private int whiteDisadvantageBonus = 0;
+
+	/**
+	 * The white player will win in the event that both players have the same
+	 * score at the end of the game if this is true. Players choose at the start
+	 * of the game whether this is true or not.
+	 */
+	private boolean whiteWinsTies = false;
 
 	/** The user inputs a previous board number to undo the game to in here */
 	private JTextField undoField;
@@ -134,7 +141,13 @@ public class Go extends GraphicsProgram {
 
 	public void init() {
 
-		usingKo = (koDialogResponse() == 0);
+		GoOptionMenu menu = new GoOptionMenu();
+		menu.setVisible(true);
+		while (!menu.isCompleted())
+			pause(20);
+		menu.setVisible(false);
+
+		assignAllOptions(menu);
 
 		createBoard();
 		initializeIntersections();
@@ -147,6 +160,11 @@ public class Go extends GraphicsProgram {
 
 		addActionListeners();
 
+	}
+
+	private void assignAllOptions(GoOptionMenu menu) {
+		usingKo = menu.getUsingKo();
+		whiteDisadvantageBonus = menu.getWhiteDisadvantageBonus();
 	}
 
 	/**
@@ -248,8 +266,9 @@ public class Go extends GraphicsProgram {
 		add(currentPlayerLabel);
 
 		currentPlayerPiece = new GOval(currentPlayerLabel.getWidth()
-				+ PIECE_DIAMETER / 2, EXTRA_HEIGHT - PIECE_DIAMETER / 3 - currentPlayerLabel.getAscent() / 2,
-				PIECE_DIAMETER, PIECE_DIAMETER);
+				+ PIECE_DIAMETER / 2, EXTRA_HEIGHT - PIECE_DIAMETER / 3
+				- currentPlayerLabel.getAscent() / 2, PIECE_DIAMETER,
+				PIECE_DIAMETER);
 		currentPlayerPiece.setFilled(true);
 		add(currentPlayerPiece);
 
@@ -426,7 +445,11 @@ public class Go extends GraphicsProgram {
 					undo(1);
 				}
 			} catch (NullPointerException playerInputInvalid) {
-				System.out.println("Player input was invalid");
+				nonIntegerInputMessage();
+				undo(1);
+
+			} catch (NumberFormatException playerInputInvalid) {
+				nonIntegerInputMessage();
 				undo(1);
 			}
 
@@ -444,6 +467,17 @@ public class Go extends GraphicsProgram {
 						"What a strange decision.", JOptionPane.PLAIN_MESSAGE);
 			}
 		}
+	}
+
+	/**
+	 * If the player inputs a non integer valuu (or no value at all) into the
+	 * undofield, they are notified with a dialog window
+	 */
+	private void nonIntegerInputMessage() {
+		JOptionPane.showMessageDialog(this,
+				"Please input integer values for this field"
+						+ "\n1 turn has been undone", "Error",
+				JOptionPane.PLAIN_MESSAGE);
 	}
 
 	/**
@@ -473,13 +507,14 @@ public class Go extends GraphicsProgram {
 		} else {
 			currentPlayerPiece.setFilled(true);
 		}
-		
+
 		remove(turnLabel);
-		turnLabel = new GLabel("Current Turn: " + currentTurn, 0, EXTRA_HEIGHT / 2);
+		turnLabel = new GLabel("Current Turn: " + currentTurn, 0,
+				EXTRA_HEIGHT / 2);
 		turnLabel.setColor(Color.BLACK);
 		turnLabel.setFont("Plain-*-18");
 		add(turnLabel);
-		
+
 	}
 
 	/**
@@ -898,6 +933,8 @@ public class Go extends GraphicsProgram {
 		if (blackScore > whiteScore) {
 			return "black";
 		} else if (whiteScore > blackScore) {
+			return "white";
+		} else if (whiteWinsTies) {
 			return "white";
 		} else {
 			return "neither player";
